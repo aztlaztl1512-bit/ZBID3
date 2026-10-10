@@ -3,10 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>استمارة تحويل للمرشد الطلابي - أ/ عبدالعزيز الفيفي</title>
+    <title>استمارة تحويل طلاب للمرشد الطلابي - أ/ عبدالعزيز الفيفي</title>
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    <!-- html2pdf Library لتصدير ملفات PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    
     <style>
         :root {
             --maroon: #800000;
@@ -49,21 +52,6 @@
             font-size: 1.5rem;
         }
 
-        .meta-fields {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
-            margin-bottom: 25px;
-            background: #f9f9f9;
-            padding: 15px;
-            border-radius: 8px;
-        }
-
-        .meta-fields div {
-            font-weight: bold;
-            color: var(--dark);
-        }
-
         .select-section {
             margin-bottom: 20px;
             background: #fff8e1;
@@ -79,13 +67,52 @@
             margin-bottom: 8px;
         }
 
-        select {
+        .search-box-wrapper {
+            position: relative;
+            flex-grow: 1;
+        }
+
+        input[type="text"].student-search {
             width: 100%;
-            padding: 10px;
+            padding: 10px 12px;
             border-radius: 6px;
             border: 1px solid #ccc;
             font-size: 1rem;
             outline: none;
+            box-sizing: border-box;
+        }
+
+        input[type="text"].student-search:focus {
+            border-color: var(--maroon);
+            box-shadow: 0 0 5px rgba(128,0,0,0.2);
+        }
+
+        .search-results {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            left: 0;
+            background: white;
+            border: 1px solid #ccc;
+            border-top: none;
+            border-radius: 0 0 6px 6px;
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 1000;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            display: none;
+        }
+
+        .search-results div {
+            padding: 10px;
+            cursor: pointer;
+            border-bottom: 1px solid #eee;
+        }
+
+        .search-results div:hover {
+            background-color: #f0f0f0;
+            color: var(--maroon);
+            font-weight: bold;
         }
 
         table {
@@ -145,13 +172,18 @@
             color: white;
         }
 
+        .btn-pdf {
+            background: #e74c3c;
+            color: white;
+        }
+
         .btn-print {
             background: #27ae60;
             color: white;
         }
 
         .btn-remove {
-            background: #e74c3c;
+            background: #c0392b;
             color: white;
             padding: 4px 10px;
             font-size: 0.8rem;
@@ -176,7 +208,7 @@
 </head>
 <body>
 
-<div class="container">
+<div class="container" id="pdfContent">
     <div class="header-info">
         <div>
             <h2>إشعار تحويل طلاب للمرشد الطلابي</h2>
@@ -188,13 +220,14 @@
         </div>
     </div>
 
-    <!-- قائمة اختيار الطالب من Firebase -->
+    <!-- قسم البحث والاختيار التفاعلي (مستثنى من الـ PDF والطباعة) -->
     <div class="select-section no-print">
-        <label for="studentSelect">اختر اسم الطالب لإضافته إلى الجدول:</label>
+        <label for="searchInput">🔍 ابحث عن اسم الطالب لإضافته مباشرة إلى القائمة:</label>
         <div style="display: flex; gap: 10px;">
-            <select id="studentSelect">
-                <option value="">-- جاري تحميل قائمة الطلاب... --</option>
-            </select>
+            <div class="search-box-wrapper">
+                <input type="text" id="searchInput" class="student-search" placeholder="اكتب اسم الطالب هنا..." oninput="filterStudents()" onfocus="filterStudents()">
+                <div id="searchResults" class="search-results"></div>
+            </div>
             <button class="btn btn-add" onclick="addSelectedStudent()">إضافة الطالب</button>
         </div>
     </div>
@@ -214,17 +247,22 @@
             </tr>
         </thead>
         <tbody id="tableBody">
-            <!-- يتم إضافة الصفوف ديناميكياً عند التحديد -->
+            <!-- يُضاف الطلاب هنا -->
         </tbody>
     </table>
 
+    <div style="margin-top: 40px; display: flex; justify-content: space-between; font-weight: bold;">
+        <div>توقيع المرشد الطلابي: ........................</div>
+        <div>توقيع معلم المادة (أ. عبدالعزيز الفيفي): ........................</div>
+    </div>
+
     <div class="actions no-print">
-        <button class="btn btn-print" onclick="window.print()">🖨️ طباعة / حفظ PDF</button>
+        <button class="btn btn-pdf" onclick="downloadPDF()">📥 تحميل كملف PDF</button>
+        <button class="btn btn-print" onclick="window.print()">🖨️ طباعة</button>
     </div>
 </div>
 
 <script>
-    // إعدادات Firebase الخاصة بك
     const firebaseConfig = {
         apiKey: "AIzaSyBkCO7FDQXd89YDf843J4_AtvEFvzzt-R0",
         authDomain: "aztlg-494c3.firebaseapp.com",
@@ -237,34 +275,66 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
+    let allStudents = [];
     let studentCount = 0;
+    let selectedStudentName = "";
 
-    // جلب قائمة الطلاب المعتمدين وتعبئتها في القائمة المنسدلة
     function loadStudentsList() {
-        const select = document.getElementById("studentSelect");
-        
         db.collection("allowed_students").orderBy("name").get().then((snapshot) => {
-            select.innerHTML = '<option value="">-- اختر طالب من القائمة --</option>';
+            allStudents = [];
             snapshot.forEach((doc) => {
                 const data = doc.data();
-                const option = document.createElement("option");
-                option.value = data.name;
-                option.textContent = data.name;
-                select.appendChild(option);
+                if (data.name) {
+                    allStudents.push(data.name);
+                }
             });
         }).catch((error) => {
             console.error("خطأ في جلب الطلاب: ", error);
-            select.innerHTML = '<option value="">حدث خطأ أثناء تحميل البيانات</option>';
         });
     }
 
-    // إضافة الطالب المختار إلى جدول التحويل
+    function filterStudents() {
+        const query = document.getElementById("searchInput").value.trim().toLowerCase();
+        const resultsContainer = document.getElementById("searchResults");
+        resultsContainer.innerHTML = "";
+
+        if (!query) {
+            resultsContainer.style.display = "none";
+            return;
+        }
+
+        const filtered = allStudents.filter(name => name.toLowerCase().includes(query));
+
+        if (filtered.length === 0) {
+            resultsContainer.innerHTML = '<div style="color: #888;">لا توجد نتائج مطابقة</div>';
+        } else {
+            filtered.forEach(name => {
+                const div = document.createElement("div");
+                div.textContent = name;
+                div.onclick = function() {
+                    document.getElementById("searchInput").value = name;
+                    selectedStudentName = name;
+                    resultsContainer.style.display = "none";
+                };
+                resultsContainer.appendChild(div);
+            });
+        }
+
+        resultsContainer.style.display = "block";
+    }
+
+    document.addEventListener("click", function(e) {
+        if (!e.target.closest(".search-box-wrapper")) {
+            document.getElementById("searchResults").style.display = "none";
+        }
+    });
+
     function addSelectedStudent() {
-        const select = document.getElementById("studentSelect");
-        const studentName = select.value;
+        const inputVal = document.getElementById("searchInput").value.trim();
+        const studentName = selectedStudentName || inputVal;
 
         if (!studentName) {
-            alert("يرجى اختيار طالب أولاً");
+            alert("يرجى اختيار أو كتابة اسم الطالب أولاً");
             return;
         }
 
@@ -284,6 +354,9 @@
         `;
 
         tbody.appendChild(row);
+
+        document.getElementById("searchInput").value = "";
+        selectedStudentName = "";
     }
 
     function removeRow(button) {
@@ -295,13 +368,26 @@
     function reindexRows() {
         const rows = document.querySelectorAll("#tableBody tr");
         studentCount = 0;
-        rows.forEach((row, index) => {
+        rows.forEach((row) => {
             studentCount++;
             row.children[0].textContent = studentCount;
         });
     }
 
-    // تشغيل جلب البيانات عند تحميل الصفحة
+    // دالة تحميل التقرير كملف PDF بشكل تلقائي
+    function downloadPDF() {
+        const element = document.getElementById('pdfContent');
+        const options = {
+            margin:       10,
+            filename:     'استمارة_تحويل_المرشد_الطلابي.pdf',
+            image:        { type: 'jpeg', quality: 0.98 },
+            html2canvas:  { scale: 2, useCORS: true },
+            jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        };
+
+        html2pdf().from(element).set(options).save();
+    }
+
     window.onload = loadStudentsList;
 </script>
 
