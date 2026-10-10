@@ -28,7 +28,7 @@
         }
 
         .container {
-            max-width: 950px;
+            max-width: 1000px;
             margin: 0 auto;
             background: #ffffff;
             padding: 30px;
@@ -82,11 +82,6 @@
             box-sizing: border-box;
         }
 
-        input[type="text"].student-search:focus {
-            border-color: var(--maroon);
-            box-shadow: 0 0 5px rgba(128,0,0,0.2);
-        }
-
         .search-results {
             position: absolute;
             top: 100%;
@@ -125,12 +120,12 @@
             border: 1px solid var(--border);
             padding: 10px;
             text-align: center;
+            font-size: 0.9rem;
         }
 
         th {
             background-color: var(--maroon);
             color: white;
-            font-size: 0.95rem;
         }
 
         tr:nth-child(even) {
@@ -144,23 +139,30 @@
             accent-color: var(--maroon);
         }
 
-        .notes-input {
-            width: 90%;
-            padding: 5px;
+        .notes-input, .counselor-reply {
+            width: 95%;
+            padding: 6px;
             border: 1px solid #ccc;
             border-radius: 4px;
+            font-family: inherit;
+        }
+
+        .counselor-reply {
+            background-color: #f4f6f7;
+            color: #2c3e50;
+            font-weight: bold;
         }
 
         .actions {
             margin-top: 25px;
             display: flex;
-            gap: 12px;
+            gap: 10px;
             justify-content: flex-end;
             flex-wrap: wrap;
         }
 
         .btn {
-            padding: 10px 20px;
+            padding: 10px 18px;
             border: none;
             border-radius: 6px;
             font-weight: bold;
@@ -169,13 +171,13 @@
         }
 
         .btn-add { background: var(--maroon); color: white; }
+        .btn-share { background: #8e44ad; color: white; }
         .btn-preview { background: #3498db; color: white; }
         .btn-pdf { background: #e74c3c; color: white; }
         .btn-print { background: #27ae60; color: white; }
-        .btn-remove { background: #c0392b; color: white; padding: 4px 10px; font-size: 0.8rem; }
+        .btn-remove { background: #c0392b; color: white; padding: 4px 8px; font-size: 0.8rem; }
         .btn-close { background: #7f8c8d; color: white; }
 
-        /* نافذة المعاينة المنبثقة (Modal) */
         .modal-overlay {
             position: fixed;
             top: 0; left: 0; right: 0; bottom: 0;
@@ -190,22 +192,12 @@
         .modal-content {
             background: white;
             border-radius: 10px;
-            max-width: 900px;
+            max-width: 950px;
             width: 100%;
             max-height: 90vh;
             overflow-y: auto;
             padding: 25px;
             box-shadow: 0 5px 25px rgba(0,0,0,0.3);
-            position: relative;
-        }
-
-        .modal-actions {
-            display: flex;
-            justify-content: flex-end;
-            gap: 10px;
-            margin-bottom: 15px;
-            border-bottom: 1px solid #eee;
-            padding-bottom: 10px;
         }
 
         @media print {
@@ -232,7 +224,7 @@
     </div>
 
     <!-- قسم البحث والاختيار التفاعلي -->
-    <div class="select-section no-print">
+    <div class="select-section no-print" id="controlSection">
         <label for="searchInput">🔍 ابحث عن اسم الطالب لإضافته مباشرة إلى القائمة:</label>
         <div style="display: flex; gap: 10px;">
             <div class="search-box-wrapper">
@@ -243,18 +235,19 @@
         </div>
     </div>
 
-    <!-- جدول المخالفات السلوكية والدراسية -->
+    <!-- جدول المخالفات وسجل الردود -->
     <table id="referralTable">
         <thead>
             <tr>
-                <th style="width: 5%;">#</th>
-                <th style="width: 25%;">اسم الطالب</th>
-                <th style="width: 15%;">عدم إحضار الواجب</th>
-                <th style="width: 15%;">عدم إحضار البحث</th>
-                <th style="width: 10%;">النوم</th>
-                <th style="width: 15%;">ضعف المشاركة</th>
-                <th style="width: 15%;">ملاحظات</th>
-                <th class="no-print" style="width: 5%;">حذف</th>
+                <th style="width: 4%;">#</th>
+                <th style="width: 20%;">اسم الطالب</th>
+                <th style="width: 10%;">الواجب</th>
+                <th style="width: 10%;">البحث</th>
+                <th style="width: 8%;">النوم</th>
+                <th style="width: 10%;">المشاركة</th>
+                <th style="width: 14%;">ملاحظات المعلم</th>
+                <th style="width: 18%;">رد المرشد الطلابي (سحابي)</th>
+                <th class="no-print" style="width: 6%;">حذف</th>
             </tr>
         </thead>
         <tbody id="tableBody">
@@ -267,20 +260,21 @@
         <div>توقيع معلم المادة (أ. عبدالعزيز الفيفي): ........................</div>
     </div>
 
-    <!-- أزياء الإجراءات -->
+    <!-- أزرار التحكم -->
     <div class="actions no-print">
+        <button class="btn btn-share" onclick="shareCounselorLink()">🔗 مشاركة رابط المرشد</button>
         <button class="btn btn-preview" onclick="showPreview()">🔍 معاينة قبل الحفظ</button>
         <button class="btn btn-pdf" onclick="downloadPDF()">📥 تحميل كملف PDF</button>
         <button class="btn btn-print" onclick="window.print()">🖨️ طباعة</button>
     </div>
 </div>
 
-<!-- نافذة المعاينة المنبثقة -->
+<!-- نافذة المعاينة -->
 <div class="modal-overlay" id="previewModal">
     <div class="modal-content">
-        <div class="modal-actions no-print">
-            <button class="btn btn-pdf" onclick="downloadPDF()">📥 حفظ وحجم PDF</button>
-            <button class="btn btn-close" onclick="closePreview()">✖ إغلاق المعاينة</button>
+        <div class="modal-actions no-print" style="display: flex; justify-content: flex-end; gap: 10px; margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 10px;">
+            <button class="btn btn-pdf" onclick="downloadPDF()">📥 حفظ كـ PDF</button>
+            <button class="btn btn-close" onclick="closePreview()">✖ إغلاق</button>
         </div>
         <div id="previewArea"></div>
     </div>
@@ -302,33 +296,37 @@
     let allStudents = [];
     let studentCount = 0;
     let selectedStudentName = "";
+    const urlParams = new URLSearchParams(window.location.search);
+    const isCounselorView = urlParams.get('mode') === 'counselor';
 
     function loadStudentsList() {
         db.collection("allowed_students").orderBy("name").get().then((snapshot) => {
             allStudents = [];
             snapshot.forEach((doc) => {
                 const data = doc.data();
-                if (data.name) {
-                    allStudents.push(data.name);
-                }
+                if (data.name) allStudents.push(data.name);
             });
-        }).catch((error) => {
-            console.error("خطأ في جلب الطلاب: ", error);
         });
+        
+        // استماع فوري للتغييرات السحابية للجدول والردود
+        listenToCloudReferrals();
+
+        if (isCounselorView) {
+            // تفعيل وضع القراءة فقط وتحويل الحقول لصلاحية المرشد
+            document.getElementById('controlSection').style.display = 'none';
+            document.querySelectorAll('.no-print').forEach(el => {
+                if(!el.classList.contains('actions')) el.style.display = 'none';
+            });
+        }
     }
 
     function filterStudents() {
         const query = document.getElementById("searchInput").value.trim().toLowerCase();
         const resultsContainer = document.getElementById("searchResults");
         resultsContainer.innerHTML = "";
-
-        if (!query) {
-            resultsContainer.style.display = "none";
-            return;
-        }
+        if (!query) { resultsContainer.style.display = "none"; return; }
 
         const filtered = allStudents.filter(name => name.toLowerCase().includes(query));
-
         if (filtered.length === 0) {
             resultsContainer.innerHTML = '<div style="color: #888;">لا توجد نتائج مطابقة</div>';
         } else {
@@ -343,93 +341,96 @@
                 resultsContainer.appendChild(div);
             });
         }
-
         resultsContainer.style.display = "block";
     }
 
     document.addEventListener("click", function(e) {
         if (!e.target.closest(".search-box-wrapper")) {
-            document.getElementById("searchResults").style.display = "none";
+            const res = document.getElementById("searchResults");
+            if(res) res.style.display = "none";
         }
     });
 
-    function addSelectedStudent() {
+    // إضافة طالب وحفظه بالسحابة
+    async function addSelectedStudent() {
         const inputVal = document.getElementById("searchInput").value.trim();
         const studentName = selectedStudentName || inputVal;
+        if (!studentName) return alert("يرجى اختيار أو كتابة اسم الطالب أولاً");
 
-        if (!studentName) {
-            alert("يرجى اختيار أو كتابة اسم الطالب أولاً");
-            return;
+        const studentId = "student_" + Date.now();
+        try {
+            await db.collection("referral_list").doc(studentId).set({
+                name: studentName,
+                homework: false,
+                research: false,
+                sleep: false,
+                participation: false,
+                notes: "",
+                reply: "",
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            document.getElementById("searchInput").value = "";
+            selectedStudentName = "";
+        } catch (e) {
+            console.error(e);
         }
-
-        studentCount++;
-        const tbody = document.getElementById("tableBody");
-
-        const row = document.createElement("tr");
-        row.innerHTML = `
-            <td>${studentCount}</td>
-            <td style="text-align: right; font-weight: bold;">${studentName}</td>
-            <td><input type="checkbox"></td>
-            <td><input type="checkbox"></td>
-            <td><input type="checkbox"></td>
-            <td><input type="checkbox"></td>
-            <td><input type="text" class="notes-input" placeholder="ملاحظة..."></td>
-            <td class="no-print"><button class="btn btn-remove" onclick="removeRow(this)">X</button></td>
-        `;
-
-        tbody.appendChild(row);
-
-        document.getElementById("searchInput").value = "";
-        selectedStudentName = "";
     }
 
-    function removeRow(button) {
-        const row = button.parentElement.parentElement;
-        row.remove();
-        reindexRows();
-    }
+    // مزامنة حالة الجدول والردود سحابياً للطرفين (المعلم والمرشد)
+    function listenToCloudReferrals() {
+        db.collection("referral_list").orderBy("createdAt", "asc").onSnapshot(snapshot => {
+            const tbody = document.getElementById("tableBody");
+            tbody.innerHTML = "";
+            studentCount = 0;
 
-    function reindexRows() {
-        const rows = document.querySelectorAll("#tableBody tr");
-        studentCount = 0;
-        rows.forEach((row) => {
-            studentCount++;
-            row.children[0].textContent = studentCount;
+            snapshot.forEach(doc => {
+                const data = doc.data();
+                const id = doc.id;
+                studentCount++;
+
+                const row = document.createElement("tr");
+                row.innerHTML = `
+                    <td>${studentCount}</td>
+                    <td style="text-align: right; font-weight: bold;">${data.name}</td>
+                    <td><input type="checkbox" ${data.homework ? 'checked' : ''} ${isCounselorView ? 'disabled' : ''} onchange="updateCloudField('${id}', 'homework', this.checked)"></td>
+                    <td><input type="checkbox" ${data.research ? 'checked' : ''} ${isCounselorView ? 'disabled' : ''} onchange="updateCloudField('${id}', 'research', this.checked)"></td>
+                    <td><input type="checkbox" ${data.sleep ? 'checked' : ''} ${isCounselorView ? 'disabled' : ''} onchange="updateCloudField('${id}', 'sleep', this.checked)"></td>
+                    <td><input type="checkbox" ${data.participation ? 'checked' : ''} ${isCounselorView ? 'disabled' : ''} onchange="updateCloudField('${id}', 'participation', this.checked)"></td>
+                    <td><input type="text" class="notes-input" value="${data.notes || ''}" ${isCounselorView ? 'disabled' : ''} placeholder="ملاحظة..." onblur="updateCloudField('${id}', 'notes', this.value)"></td>
+                    <td><input type="text" class="counselor-reply" value="${data.reply || ''}" ${!isCounselorView ? 'placeholder="رد المرشد..."' : 'placeholder="اكتب ردك هنا..."'} onblur="updateCloudField('${id}', 'reply', this.value)"></td>
+                    <td class="no-print"><button class="btn btn-remove" ${isCounselorView ? 'style="display:none;"' : ''} onclick="deleteCloudStudent('${id}')">X</button></td>
+                `;
+                tbody.appendChild(row);
+            });
         });
     }
 
-    // دالة عرض المعاينة قبل الحفظ
+    async function updateCloudField(id, field, value) {
+        await db.collection("referral_list").doc(id).update({ [field]: value });
+    }
+
+    async function deleteCloudStudent(id) {
+        if(confirm("حذف هذا الطالب من القائمة؟")) {
+            await db.collection("referral_list").doc(id).delete();
+        }
+    }
+
+    // مشاركة رابط مخصص للمرشد الطلابي
+    function shareCounselorLink() {
+        const currentUrl = window.location.href.split('?')[0];
+        const counselorUrl = currentUrl + "?mode=counselor";
+        navigator.clipboard.writeText(counselorUrl).then(() => {
+            alert("تم نسخ رابط القراءة والرد الخاص بالمرشد الطلابي بنجاح! 📋\nأرسله للمرشد ليتمكن من تصفح الأسماء وكتابة الردود مباشرة لتظهر لديك فوراً.");
+        });
+    }
+
     function showPreview() {
         const contentClone = document.getElementById('pdfContent').cloneNode(true);
-        
-        // إزالة العناصر التي لا تظهر بالطباعة من النسخة المعروضة
-        const noPrintElements = contentClone.querySelectorAll('.no-print');
-        noPrintElements.forEach(el => el.remove());
-
-        // استبدال أزرار الاختيار والمدخلات بنصوص أو علامات صح ثابتة للعرض المباشر
-        const checkboxes = contentClone.querySelectorAll('input[type="checkbox"]');
-        const originalCheckboxes = document.querySelectorAll('#tableBody input[type="checkbox"]');
-        checkboxes.forEach((cb, idx) => {
-            const span = document.createElement('span');
-            span.textContent = originalCheckboxes[idx].checked ? '✔' : '—';
-            span.style.fontSize = '1.1rem';
-            span.style.fontWeight = 'bold';
-            span.style.color = originalCheckboxes[idx].checked ? '#c62828' : '#888';
-            cb.parentNode.replaceChild(span, cb);
-        });
-
-        const noteInputs = contentClone.querySelectorAll('.notes-input');
-        const originalNoteInputs = document.querySelectorAll('#tableBody .notes-input');
-        noteInputs.forEach((input, idx) => {
-            const span = document.createElement('span');
-            span.textContent = originalNoteInputs[idx].value || '-';
-            input.parentNode.replaceChild(span, input);
-        });
+        contentClone.querySelectorAll('.no-print').forEach(el => el.remove());
 
         const previewArea = document.getElementById('previewArea');
         previewArea.innerHTML = '';
         previewArea.appendChild(contentClone);
-
         document.getElementById('previewModal').style.display = 'flex';
     }
 
@@ -437,17 +438,15 @@
         document.getElementById('previewModal').style.display = 'none';
     }
 
-    // دالة تحميل التقرير كملف PDF
     function downloadPDF() {
         const element = document.getElementById('pdfContent');
         const options = {
-            margin:       10,
-            filename:     'استمارة_تحويل_المرشد_الطلابي.pdf',
-            image:        { type: 'jpeg', quality: 0.98 },
-            html2canvas:  { scale: 2, useCORS: true },
-            jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            margin: 10,
+            filename: 'استمارة_تحويل_المرشد_الطلابي.pdf',
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: { scale: 2, useCORS: true },
+            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
         };
-
         html2pdf().from(element).set(options).save();
     }
 
