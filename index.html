@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>استمارة تحويل للمرشد الطلابي - أ/ عبدالعزيز الفيفي</title>
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    <style>
+        :root {
+            --maroon: #800000;
+            --gold: #d4af37;
+            --bg: #fdfaf1;
+            --dark: #2c3e50;
+            --border: #dcdde1;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg);
+            margin: 0;
+            padding: 20px;
+            color: #333;
+        }
+
+        .container {
+            max-width: 950px;
+            margin: 0 auto;
+            background: #ffffff;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+            border-top: 8px solid var(--maroon);
+        }
+
+        .header-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid var(--gold);
+            padding-bottom: 15px;
+            margin-bottom: 25px;
+        }
+
+        .header-info h2 {
+            margin: 0;
+            color: var(--maroon);
+            font-size: 1.5rem;
+        }
+
+        .meta-fields {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 25px;
+            background: #f9f9f9;
+            padding: 15px;
+            border-radius: 8px;
+        }
+
+        .meta-fields div {
+            font-weight: bold;
+            color: var(--dark);
+        }
+
+        .select-section {
+            margin-bottom: 20px;
+            background: #fff8e1;
+            padding: 15px;
+            border: 1px dashed var(--gold);
+            border-radius: 8px;
+        }
+
+        .select-section label {
+            font-weight: bold;
+            color: var(--maroon);
+            display: block;
+            margin-bottom: 8px;
+        }
+
+        select {
+            width: 100%;
+            padding: 10px;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+            font-size: 1rem;
+            outline: none;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        th, td {
+            border: 1px solid var(--border);
+            padding: 10px;
+            text-align: center;
+        }
+
+        th {
+            background-color: var(--maroon);
+            color: white;
+            font-size: 0.95rem;
+        }
+
+        tr:nth-child(even) {
+            background-color: #fdfdfd;
+        }
+
+        input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+            accent-color: var(--maroon);
+        }
+
+        .notes-input {
+            width: 90%;
+            padding: 5px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        .actions {
+            margin-top: 25px;
+            display: flex;
+            gap: 15px;
+            justify-content: flex-end;
+        }
+
+        .btn {
+            padding: 10px 25px;
+            border: none;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .btn-add {
+            background: var(--maroon);
+            color: white;
+        }
+
+        .btn-print {
+            background: #27ae60;
+            color: white;
+        }
+
+        .btn-remove {
+            background: #e74c3c;
+            color: white;
+            padding: 4px 10px;
+            font-size: 0.8rem;
+        }
+
+        @media print {
+            .select-section, .actions, .btn-remove, .no-print {
+                display: none !important;
+            }
+            body {
+                background: white;
+                padding: 0;
+            }
+            .container {
+                box-shadow: none;
+                border: none;
+                width: 100%;
+                max-width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header-info">
+        <div>
+            <h2>إشعار تحويل طلاب للمرشد الطلابي</h2>
+            <small>المملكة العربية السعودية - وزارة التعليم</small>
+        </div>
+        <div style="text-align: left;">
+            <div><strong>المادة:</strong> الكفايات اللغوية (أول ثانوي)</div>
+            <div><strong>معلم المادة:</strong> أ. عبدالعزيز الفيفي</div>
+        </div>
+    </div>
+
+    <!-- قائمة اختيار الطالب من Firebase -->
+    <div class="select-section no-print">
+        <label for="studentSelect">اختر اسم الطالب لإضافته إلى الجدول:</label>
+        <div style="display: flex; gap: 10px;">
+            <select id="studentSelect">
+                <option value="">-- جاري تحميل قائمة الطلاب... --</option>
+            </select>
+            <button class="btn btn-add" onclick="addSelectedStudent()">إضافة الطالب</button>
+        </div>
+    </div>
+
+    <!-- جدول المخالفات السلوكية والدراسية -->
+    <table id="referralTable">
+        <thead>
+            <tr>
+                <th style="width: 5%;">#</th>
+                <th style="width: 25%;">اسم الطالب</th>
+                <th style="width: 15%;">عدم إحضار الواجب</th>
+                <th style="width: 15%;">عدم إحضار البحث</th>
+                <th style="width: 10%;">النوم</th>
+                <th style="width: 15%;">ضعف المشاركة</th>
+                <th style="width: 15%;">ملاحظات</th>
+                <th class="no-print" style="width: 5%;">حذف</th>
+            </tr>
+        </thead>
+        <tbody id="tableBody">
+            <!-- يتم إضافة الصفوف ديناميكياً عند التحديد -->
+        </tbody>
+    </table>
+
+    <div class="actions no-print">
+        <button class="btn btn-print" onclick="window.print()">🖨️ طباعة / حفظ PDF</button>
+    </div>
+</div>
+
+<script>
+    // إعدادات Firebase الخاصة بك
+    const firebaseConfig = {
+        apiKey: "AIzaSyBkCO7FDQXd89YDf843J4_AtvEFvzzt-R0",
+        authDomain: "aztlg-494c3.firebaseapp.com",
+        projectId: "aztlg-494c3",
+        storageBucket: "aztlg-494c3.firebasestorage.app",
+        messagingSenderId: "597051893949",
+        appId: "1:597051893949:web:de5554ac900317a92b2fd4"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    let studentCount = 0;
+
+    // جلب قائمة الطلاب المعتمدين وتعبئتها في القائمة المنسدلة
+    function loadStudentsList() {
+        const select = document.getElementById("studentSelect");
+        
+        db.collection("allowed_students").orderBy("name").get().then((snapshot) => {
+            select.innerHTML = '<option value="">-- اختر طالب من القائمة --</option>';
+            snapshot.forEach((doc) => {
+                const data = doc.data();
+                const option = document.createElement("option");
+                option.value = data.name;
+                option.textContent = data.name;
+                select.appendChild(option);
+            });
+        }).catch((error) => {
+            console.error("خطأ في جلب الطلاب: ", error);
+            select.innerHTML = '<option value="">حدث خطأ أثناء تحميل البيانات</option>';
+        });
+    }
+
+    // إضافة الطالب المختار إلى جدول التحويل
+    function addSelectedStudent() {
+        const select = document.getElementById("studentSelect");
+        const studentName = select.value;
+
+        if (!studentName) {
+            alert("يرجى اختيار طالب أولاً");
+            return;
+        }
+
+        studentCount++;
+        const tbody = document.getElementById("tableBody");
+
+        const row = document.createElement("tr");
+        row.innerHTML = `
+            <td>${studentCount}</td>
+            <td style="text-align: right; font-weight: bold;">${studentName}</td>
+            <td><input type="checkbox"></td>
+            <td><input type="checkbox"></td>
+            <td><input type="checkbox"></td>
+            <td><input type="checkbox"></td>
+            <td><input type="text" class="notes-input" placeholder="ملاحظة..."></td>
+            <td class="no-print"><button class="btn btn-remove" onclick="removeRow(this)">X</button></td>
+        `;
+
+        tbody.appendChild(row);
+    }
+
+    function removeRow(button) {
+        const row = button.parentElement.parentElement;
+        row.remove();
+        reindexRows();
+    }
+
+    function reindexRows() {
+        const rows = document.querySelectorAll("#tableBody tr");
+        studentCount = 0;
+        rows.forEach((row, index) => {
+            studentCount++;
+            row.children[0].textContent = studentCount;
+        });
+    }
+
+    // تشغيل جلب البيانات عند تحميل الصفحة
+    window.onload = loadStudentsList;
+</script>
+
+</body>
+</html>
