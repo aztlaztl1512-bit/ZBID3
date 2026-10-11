@@ -319,15 +319,35 @@
             border-color: #cbd5e1;
         }
 
-        .timestamp-badge {
-            display: inline-block;
-            font-size: 0.75rem;
-            color: #64748b;
-            background: #f1f5f9;
-            padding: 3px 8px;
-            border-radius: 4px;
+        /* الشارات الملونة الأنيقة للوقت والتاريخ */
+        .time-badge-referral {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: linear-gradient(135deg, #fff5f5 0%, #ffe3e3 100%);
+            color: #991b1b;
+            border: 1px solid #fca5a5;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.78rem;
+            font-weight: 700;
+            box-shadow: 0 2px 4px rgba(220, 38, 38, 0.08);
             margin-top: 4px;
-            font-weight: 600;
+        }
+
+        .time-badge-reply {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+            color: #0369a1;
+            border: 1px solid #7dd3fc;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.78rem;
+            font-weight: 700;
+            box-shadow: 0 2px 4px rgba(2, 132, 199, 0.08);
+            margin-top: 4px;
         }
 
         .actions {
@@ -475,7 +495,7 @@
         <thead>
             <tr>
                 <th style="width: 5%;">#</th>
-                <th style="width: 20%;">اسم الطالب وتاريخ التحويل</th>
+                <th style="width: 22%;">اسم الطالب وتاريخ التحويل</th>
                 <th style="width: 25%;" class="no-print">اختيار مخالفة وإضافتها</th>
                 <th style="width: 25%;">قائمة المخالفات المسجلة للطالب</th>
                 <th style="width: 18%;">ملاحظات وسلوكيات المعلم</th>
@@ -701,14 +721,14 @@
                 
                 html += `
                     <div class="history-card" id="history_card_${docId}">
-                        <div style="font-weight: bold; color: var(--maroon); margin-bottom: 5px;">
-                            <i class="fa-regular fa-clock"></i> تاريخ ووقت التحويل: <span class="timestamp-badge">${createdTimeStr}</span>
+                        <div style="font-weight: bold; color: var(--maroon); margin-bottom: 8px;">
+                            <span class="time-badge-referral"><i class="fa-solid fa-calendar-check"></i> إحالة المعلم: ${createdTimeStr}</span>
                         </div>
                         <div style="font-size: 0.85rem; margin-bottom: 4px;"><strong>المخالفات:</strong> ${violationsList}</div>
                         <div style="font-size: 0.85rem; margin-bottom: 4px;"><strong>ملاحظاتك:</strong> ${data.notes || 'لا توجد ملاحظات'}</div>
                         <div style="font-size: 0.85rem; color: #0284c7; margin-bottom: 8px;">
                             <strong>رد المرشد الطلابي:</strong> ${data.reply || 'لم يتم الرد بعد'} 
-                            ${replyTimeStr ? `<span class="timestamp-badge"><i class="fa-regular fa-clock"></i> ${replyTimeStr}</span>` : ''}
+                            ${replyTimeStr ? `<br><span class="time-badge-reply"><i class="fa-solid fa-reply-all"></i> وقت الرد: ${replyTimeStr}</span>` : ''}
                         </div>
                         
                         <div style="display: flex; gap: 8px; justify-content: flex-end;" class="no-print">
@@ -792,15 +812,15 @@
 
                 html += `
                     <div class="history-card">
-                        <div style="display: flex; justify-content: space-between; font-weight: bold; color: var(--maroon); margin-bottom: 5px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; font-weight: bold; color: var(--maroon); margin-bottom: 8px;">
                             <span>🎓 الطالب: ${data.name}</span>
-                            <span class="timestamp-badge"><i class="fa-regular fa-clock"></i> ${createdTimeStr}</span>
+                            <span class="time-badge-referral"><i class="fa-solid fa-calendar-check"></i> ${createdTimeStr}</span>
                         </div>
                         <div style="font-size: 0.85rem; margin-bottom: 4px;"><strong>المخالفات المسجلة:</strong> ${violationsList}</div>
                         <div style="font-size: 0.85rem; margin-bottom: 4px;"><strong>ملاحظات المعلم:</strong> ${data.notes || 'لا توجد'}</div>
                         <div style="font-size: 0.85rem; color: #0284c7; margin-bottom: 8px;">
                             <strong>رد المرشد:</strong> ${data.reply || 'لم يتم الرد بعد'}
-                            ${replyTimeStr ? `<span class="timestamp-badge"><i class="fa-regular fa-clock"></i> ${replyTimeStr}</span>` : ''}
+                            ${replyTimeStr ? `<br><span class="time-badge-reply"><i class="fa-solid fa-reply-all"></i> وقت الرد: ${replyTimeStr}</span>` : ''}
                         </div>
                         
                         <div style="display: flex; gap: 8px; justify-content: flex-end;">
@@ -837,12 +857,12 @@
     function openSingleReport(name, dateStr, violations, notes, reply, replyDateStr) {
         const content = `
             <p><strong>اسم الطالب:</strong> ${name}</p>
-            <p><strong>تاريخ ووقت التحويل:</strong> <span class="timestamp-badge"><i class="fa-regular fa-clock"></i> ${dateStr}</span></p>
+            <p><strong>تاريخ ووقت الإحالة:</strong> <span class="time-badge-referral"><i class="fa-solid fa-calendar-check"></i> ${dateStr}</span></p>
             <p><strong>المخالفات المسجلة:</strong> ${violations}</p>
             <p><strong>ملاحظات المعلم:</strong> ${notes}</p>
             <hr style="border: 0; border-top: 1px solid #ddd; margin: 15px 0;">
             <p><strong>رد المرشد الطلابي:</strong> <span style="color: #0284c7; font-weight: bold;">${reply}</span> 
-            ${replyDateStr ? `<br><span class="timestamp-badge" style="margin-top: 5px;"><i class="fa-regular fa-clock"></i> وقت الرد: ${replyDateStr}</span>` : ''}</p>
+            ${replyDateStr ? `<br><span class="time-badge-reply" style="margin-top: 8px;"><i class="fa-solid fa-reply-all"></i> وقت الرد: ${replyDateStr}</span>` : ''}</p>
         `;
         document.getElementById('singleReportContent').innerHTML = content;
         document.getElementById('singleReportModal').style.display = 'flex';
@@ -916,7 +936,7 @@
                     <td style="text-align: right; font-weight: bold;">
                         ${data.name}
                         <br>
-                        <span class="timestamp-badge"><i class="fa-regular fa-clock"></i> ${createdTimeStr}</span>
+                        <span class="time-badge-referral"><i class="fa-solid fa-calendar-check"></i> ${createdTimeStr}</span>
                     </td>
                     <td class="no-print">
                         <select id="type_select_${id}" class="violation-select" ${isCounselorView ? 'disabled' : ''} onchange="onTypeSelectChange('${id}')">
@@ -940,7 +960,7 @@
                         <textarea class="notes-input" ${isCounselorView ? 'disabled' : ''} placeholder="سلوكيات وملاحظات المعلم..." onblur="updateCloudField('${id}', 'notes', this.value)">${data.notes || ''}</textarea>
                         <div id="counselor_box_${id}" style="display:none; margin-top: 5px;">
                             <textarea id="reply_${id}" class="counselor-reply" placeholder="اكتب رد المرشد الطلابي هنا...">${data.reply !== "لم يتم الرد بعد" ? data.reply : ''}</textarea>
-                            ${replyTimeStr ? `<div style="text-align: right;"><span class="timestamp-badge"><i class="fa-regular fa-clock"></i> رد المرشد: ${replyTimeStr}</span></div>` : ''}
+                            ${replyTimeStr ? `<div style="text-align: right;"><span class="time-badge-reply"><i class="fa-solid fa-reply-all"></i> وقت الرد: ${replyTimeStr}</span></div>` : ''}
                             <button class="btn-save-reply" onclick="saveReply('${id}')"><i class="fa-solid fa-paper-plane"></i> حفظ رد المرشد</button>
                         </div>
                     </td>
