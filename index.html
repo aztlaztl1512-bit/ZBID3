@@ -3,73 +3,139 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>استمارة تحويل طلاب للمرشد الطلابي - أ/ عبدالعزيز الفيفي</title>
+    <title>منظومة تحويل الطلاب السحابية 2026 - أ/ عبدالعزيز الفيفي</title>
+    <!-- Google Fonts: Tajawal -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800;900&display=swap" rel="stylesheet">
+    <!-- FontAwesome 6 Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
-    <!-- html2pdf Library لتصدير ملفات PDF -->
+    <!-- html2pdf Library -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     
     <style>
         :root {
-            --maroon: #800000;
+            --maroon: #6b0c22;
+            --maroon-light: #8e1432;
             --gold: #d4af37;
-            --bg: #fdfaf1;
-            --dark: #2c3e50;
-            --border: #dcdde1;
+            --gold-light: #fef3c7;
+            --bg: #f8fafc;
+            --card-bg: #ffffff;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+            --shadow-sm: 0 2px 8px rgba(0,0,0,0.04);
+            --shadow-md: 0 10px 25px -5px rgba(0,0,0,0.08), 0 8px 10px -6px rgba(0,0,0,0.04);
+            --radius-sm: 8px;
+            --radius-md: 14px;
+            --radius-lg: 20px;
+        }
+
+        * {
+            box-sizing: border-box;
+            transition: all 0.2s ease-in-out;
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Tajawal', sans-serif;
             background-color: var(--bg);
+            background-image: radial-gradient(#e2e8f0 1px, transparent 1px);
+            background-size: 24px 24px;
             margin: 0;
-            padding: 20px;
-            color: #333;
+            padding: 30px 15px;
+            color: var(--text-main);
+            line-height: 1.6;
         }
 
         .container {
-            max-width: 1100px;
+            max-width: 1200px;
             margin: 0 auto;
-            background: #ffffff;
-            padding: 30px;
-            border-radius: 12px;
-            box-shadow: 0 8px 24px rgba(0,0,0,0.08);
-            border-top: 8px solid var(--maroon);
+            background: var(--card-bg);
+            padding: 35px;
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-md);
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(10px);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .container::before {
+            content: '';
+            position: absolute;
+            top: 0; right: 0; left: 0;
+            height: 6px;
+            background: linear-gradient(90deg, var(--maroon), var(--gold), var(--maroon));
         }
 
         .header-info {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            border-bottom: 2px solid var(--gold);
-            padding-bottom: 15px;
+            border-bottom: 2px solid #f1f5f9;
+            padding-bottom: 20px;
             margin-bottom: 25px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .header-title-box {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .header-icon {
+            width: 55px;
+            height: 55px;
+            background: linear-gradient(135deg, var(--maroon), var(--maroon-light));
+            color: white;
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            box-shadow: 0 4px 12px rgba(107, 12, 34, 0.25);
         }
 
         .header-info h2 {
             margin: 0;
             color: var(--maroon);
-            font-size: 1.5rem;
+            font-size: 1.6rem;
+            font-weight: 800;
+        }
+
+        .header-badge {
+            background: #f1f5f9;
+            padding: 10px 18px;
+            border-radius: var(--radius-md);
+            border-right: 4px solid var(--gold);
+            font-size: 0.9rem;
         }
 
         .select-section {
-            margin-bottom: 20px;
-            background: #fff8e1;
-            padding: 15px;
-            border: 1px dashed var(--gold);
-            border-radius: 8px;
+            margin-bottom: 25px;
+            background: linear-gradient(135deg, #fffcf0 0%, #fff8e1 100%);
+            padding: 20px;
+            border: 1px solid #fef08a;
+            border-radius: var(--radius-md);
+            box-shadow: var(--shadow-sm);
         }
 
         .select-section label {
-            font-weight: bold;
+            font-weight: 700;
             color: var(--maroon);
             display: block;
-            margin-bottom: 8px;
+            margin-bottom: 10px;
+            font-size: 1rem;
         }
 
         .search-container {
             display: flex;
-            gap: 10px;
+            gap: 12px;
             align-items: center;
             flex-wrap: wrap;
         }
@@ -77,206 +143,250 @@
         .search-box-wrapper {
             position: relative;
             flex-grow: 1;
-            min-width: 250px;
+            min-width: 280px;
         }
 
         input[type="text"].student-search {
             width: 100%;
-            padding: 10px 12px;
-            border-radius: 6px;
-            border: 1px solid #ccc;
-            font-size: 1rem;
+            padding: 12px 16px;
+            border-radius: var(--radius-sm);
+            border: 1.5px solid var(--border);
+            font-size: 0.95rem;
+            font-family: inherit;
             outline: none;
-            box-sizing: border-box;
+            background: white;
+        }
+
+        input[type="text"].student-search:focus {
+            border-color: var(--maroon);
+            box-shadow: 0 0 0 4px rgba(107, 12, 34, 0.1);
         }
 
         .search-results {
             position: absolute;
-            top: 100%;
+            top: 105%;
             right: 0;
             left: 0;
             background: white;
-            border: 1px solid #ccc;
-            border-top: none;
-            border-radius: 0 0 6px 6px;
-            max-height: 200px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            max-height: 220px;
             overflow-y: auto;
             z-index: 1000;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            box-shadow: var(--shadow-md);
             display: none;
         }
 
         .search-results div {
-            padding: 10px;
+            padding: 12px 16px;
             cursor: pointer;
-            border-bottom: 1px solid #eee;
+            border-bottom: 1px solid #f1f5f9;
+            font-weight: 500;
         }
 
         .search-results div:hover {
-            background-color: #f0f0f0;
+            background-color: #fdf2f8;
             color: var(--maroon);
-            font-weight: bold;
+            font-weight: 700;
+            padding-right: 22px;
         }
 
         select.violation-select, select.count-select {
             width: 100%;
-            padding: 7px;
-            border-radius: 6px;
-            border: 1px solid #ccc;
+            padding: 9px 12px;
+            border-radius: var(--radius-sm);
+            border: 1.5px solid var(--border);
             font-size: 0.85rem;
             outline: none;
-            box-sizing: border-box;
             background-color: #fff;
             cursor: pointer;
             font-family: inherit;
-            margin-bottom: 4px;
+            margin-bottom: 6px;
+        }
+
+        select.violation-select:focus, select.count-select:focus {
+            border-color: var(--maroon);
         }
 
         .history-section {
-            background: #f8f9fa;
-            border: 2px solid #17a2b8;
-            border-radius: 10px;
+            background: #f0f9ff;
+            border: 1.5px solid #bae6fd;
+            border-radius: var(--radius-md);
             padding: 20px;
             margin-bottom: 25px;
             display: none;
         }
 
         .history-section h3 {
-            color: #17a2b8;
+            color: #0369a1;
             margin-top: 0;
-            border-bottom: 1px solid #ddd;
-            padding-bottom: 8px;
+            border-bottom: 1px solid #e0f2fe;
+            padding-bottom: 10px;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            font-size: 1.1rem;
         }
 
         .history-card {
             background: white;
-            padding: 15px;
-            border-radius: 8px;
-            border: 1px solid #ccc;
+            padding: 16px;
+            border-radius: var(--radius-sm);
+            border: 1px solid #e2e8f0;
             margin-bottom: 12px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.03);
-        }
-
-        .history-card-actions {
-            margin-top: 10px;
-            display: flex;
-            gap: 8px;
-            justify-content: flex-end;
+            box-shadow: var(--shadow-sm);
         }
 
         table {
             width: 100%;
-            border-collapse: collapse;
+            border-collapse: separate;
+            border-spacing: 0;
             margin-top: 20px;
+            border-radius: var(--radius-md);
+            overflow: hidden;
+            border: 1px solid var(--border);
         }
 
         th, td {
-            border: 1px solid var(--border);
-            padding: 8px;
+            padding: 12px;
             text-align: center;
-            font-size: 0.85rem;
+            font-size: 0.9rem;
             vertical-align: middle;
+            border-bottom: 1px solid var(--border);
         }
 
         th {
             background-color: var(--maroon);
             color: white;
+            font-weight: 700;
+            letter-spacing: 0.3px;
+        }
+
+        tr:last-child td {
+            border-bottom: none;
         }
 
         tr:nth-child(even) {
-            background-color: #fdfdfd;
+            background-color: #f8fafc;
         }
 
-        /* تنسيق قائمة المخالفات المضافة */
         .violation-tags-list {
             display: flex;
             flex-direction: column;
-            gap: 5px;
+            gap: 6px;
             margin-top: 6px;
             text-align: right;
         }
 
         .violation-tag {
             background-color: #fef3c7;
-            border: 1px solid #f59e0b;
-            color: #92400e;
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-size: 0.8rem;
+            border: 1px solid #fde047;
+            color: #854d0e;
+            padding: 5px 10px;
+            border-radius: var(--radius-sm);
+            font-size: 0.82rem;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            font-weight: bold;
+            font-weight: 600;
         }
 
         .btn-remove-tag {
             background: transparent;
             border: none;
-            color: #dc2626;
+            color: #ef4444;
             cursor: pointer;
             font-size: 0.9rem;
             padding: 0 4px;
-            font-weight: bold;
         }
 
         textarea.notes-input, textarea.counselor-reply {
             width: 100%;
-            min-height: 55px;
-            padding: 6px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
+            min-height: 60px;
+            padding: 8px 12px;
+            border: 1.5px solid var(--border);
+            border-radius: var(--radius-sm);
             font-family: inherit;
             font-size: 0.85rem;
             resize: vertical;
-            box-sizing: border-box;
             margin-bottom: 4px;
         }
 
         textarea.counselor-reply {
-            background-color: #f4f6f7;
-            color: #2c3e50;
-            font-weight: bold;
+            background-color: #f1f5f9;
+            color: #1e293b;
+            font-weight: 600;
+            border-color: #cbd5e1;
         }
 
         .actions {
-            margin-top: 25px;
+            margin-top: 30px;
             display: flex;
-            gap: 10px;
+            gap: 12px;
             justify-content: flex-end;
             flex-wrap: wrap;
         }
 
         .btn {
-            padding: 10px 18px;
+            padding: 10px 20px;
             border: none;
-            border-radius: 6px;
-            font-weight: bold;
+            border-radius: var(--radius-sm);
+            font-weight: 700;
+            font-size: 0.9rem;
+            font-family: inherit;
             cursor: pointer;
-            transition: 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
         }
 
         .btn-add { background: var(--maroon); color: white; }
-        .btn-add-violation { background: #d97706; color: white; padding: 4px 8px; font-size: 0.75rem; border-radius: 4px; cursor: pointer; border: none; width: 100%; margin-top: 2px; }
-        .btn-save-report { background: #2980b9; color: white; }
-        .btn-saved-list { background: #d35400; color: white; }
-        .btn-share { background: #8e44ad; color: white; }
-        .btn-preview { background: #3498db; color: white; }
-        .btn-pdf { background: #e74c3c; color: white; }
-        .btn-print { background: #27ae60; color: white; }
-        .btn-save-student { background: #27ae60; color: white; padding: 5px 10px; font-size: 0.8rem; border-radius: 4px; cursor: pointer; border: none; }
-        .btn-save-reply { background: #27ae60; color: white; padding: 6px 12px; font-size: 0.8rem; border-radius: 4px; cursor: pointer; border: none; display: none; margin-top: 4px; }
-        .btn-view-report { background: #17a2b8; color: white; padding: 5px 8px; font-size: 0.8rem; border-radius: 4px; border: none; cursor: pointer; }
-        .btn-edit-report { background: #f39c12; color: white; padding: 5px 8px; font-size: 0.8rem; border-radius: 4px; border: none; cursor: pointer; }
-        .btn-remove { background: #c0392b; color: white; padding: 5px 8px; font-size: 0.8rem; border-radius: 4px; border: none; cursor: pointer; }
-        .btn-close { background: #7f8c8d; color: white; }
+        .btn-add-violation { background: #d97706; color: white; padding: 6px 10px; font-size: 0.78rem; border-radius: 6px; cursor: pointer; border: none; width: 100%; margin-top: 4px; font-family: inherit; font-weight: 700; }
+        .btn-save-report { background: #0284c7; color: white; }
+        .btn-saved-list { background: #ea580c; color: white; }
+        .btn-share { background: #7c3aed; color: white; }
+        .btn-preview { background: #2563eb; color: white; }
+        .btn-pdf { background: #dc2626; color: white; }
+        .btn-print { background: #16a34a; color: white; }
+        .btn-save-student { background: #16a34a; color: white; padding: 6px 12px; font-size: 0.8rem; border-radius: 6px; cursor: pointer; border: none; font-family: inherit; font-weight: 700; }
+        .btn-save-reply { background: #16a34a; color: white; padding: 6px 12px; font-size: 0.8rem; border-radius: 6px; cursor: pointer; border: none; display: none; margin-top: 4px; font-family: inherit; font-weight: 700; }
+        .btn-view-report { background: #0284c7; color: white; padding: 6px 10px; font-size: 0.8rem; border-radius: 6px; border: none; cursor: pointer; }
+        .btn-edit-report { background: #d97706; color: white; padding: 6px 10px; font-size: 0.8rem; border-radius: 6px; border: none; cursor: pointer; }
+        .btn-remove { background: #dc2626; color: white; padding: 6px 10px; font-size: 0.8rem; border-radius: 6px; border: none; cursor: pointer; }
+        .btn-close { background: #64748b; color: white; }
+
+        .toast-notification {
+            position: fixed;
+            bottom: 25px; right: 25px;
+            background: #0f172a;
+            color: white;
+            padding: 14px 24px;
+            border-radius: var(--radius-md);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            z-index: 9999;
+            transform: translateY(150%);
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            font-weight: 600;
+        }
+
+        .toast-notification.show {
+            transform: translateY(0);
+        }
 
         .modal-overlay {
             position: fixed;
             top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0,0,0,0.6);
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(4px);
             display: none;
             justify-content: center;
             align-items: center;
@@ -286,54 +396,64 @@
 
         .modal-content {
             background: white;
-            border-radius: 10px;
+            border-radius: var(--radius-lg);
             max-width: 900px;
             width: 100%;
             max-height: 90vh;
             overflow-y: auto;
-            padding: 25px;
-            box-shadow: 0 5px 25px rgba(0,0,0,0.3);
+            padding: 30px;
+            box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1);
         }
 
         @media print {
-            .select-section, .history-section, .actions, .btn-remove, .btn-edit-report, .btn-view-report, .btn-save-report, .btn-saved-list, .btn-save-student, .btn-save-reply, .btn-add-violation, .btn-remove-tag, .no-print, .modal-overlay {
+            .select-section, .history-section, .actions, .btn-remove, .btn-edit-report, .btn-view-report, .btn-save-report, .btn-saved-list, .btn-save-student, .btn-save-reply, .btn-add-violation, .btn-remove-tag, .no-print, .modal-overlay, .toast-notification {
                 display: none !important;
             }
             body { background: white; padding: 0; }
-            .container { box-shadow: none; border: none; width: 100%; max-width: 100%; }
+            .container { box-shadow: none; border: none; width: 100%; max-width: 100%; padding: 0; }
         }
     </style>
 </head>
 <body>
 
+<div class="toast-notification" id="toast">
+    <i class="fa-solid fa-circle-check" style="color: #4ade80; font-size: 1.2rem;"></i>
+    <span id="toastMsg">تمت العملية بنجاح</span>
+</div>
+
 <div class="container" id="pdfContent">
     <div class="header-info">
-        <div>
-            <h2>إشعار تحويل طلاب للمرشد الطلابي</h2>
-            <small>المملكة العربية السعودية - وزارة التعليم</small>
+        <div class="header-title-box">
+            <div class="header-icon">
+                <i class="fa-solid fa-graduation-cap"></i>
+            </div>
+            <div>
+                <h2>إشعار تحويل طلاب للمرشد الطلابي</h2>
+                <small style="color: var(--text-muted); font-weight: 600;">المملكة العربية السعودية - وزارة التعليم</small>
+            </div>
         </div>
-        <div style="text-align: left;">
-            <div><strong>المادة:</strong> الكفايات اللغوية (أول ثانوي)</div>
-            <div><strong>معلم المادة:</strong> أ. عبدالعزيز الفيفي</div>
+        <div class="header-badge">
+            <div><i class="fa-solid fa-book-bookmark" style="color: var(--maroon);"></i> <strong>المادة:</strong> الكفايات اللغوية (أول ثانوي)</div>
+            <div><i class="fa-solid fa-user-tie" style="color: var(--maroon);"></i> <strong>معلم المادة:</strong> أ. عبدالعزيز الفيفي</div>
         </div>
     </div>
 
     <!-- قسم البحث واختيار الطالب -->
     <div class="select-section no-print" id="controlSection">
-        <label for="searchInput">🔍 ابحث عن اسم الطالب واختاره لإضافته للقائمة:</label>
+        <label for="searchInput"><i class="fa-solid fa-magnifying-glass"></i> ابحث عن اسم الطالب واختاره لإضافته للقائمة:</label>
         <div class="search-container">
             <div class="search-box-wrapper">
-                <input type="text" id="searchInput" class="student-search" placeholder="اكتب اسم الطالب هنا للبحث..." oninput="filterStudents()" onfocus="filterStudents()">
+                <input type="text" id="searchInput" class="student-search" placeholder="اكتب اسم الطالب هنا..." oninput="filterStudents()" onfocus="filterStudents()">
                 <div id="searchResults" class="search-results"></div>
             </div>
-            <button class="btn btn-add" onclick="addSelectedStudent()">إضافة للقائمة</button>
+            <button class="btn btn-add" onclick="addSelectedStudent()"><i class="fa-solid fa-plus"></i> إضافة للقائمة</button>
         </div>
     </div>
 
     <!-- قسم أرشيف التقارير السابقة للطالب -->
     <div class="history-section no-print" id="studentHistorySection">
         <h3 id="historyTitle">
-            <span>📂 سجل تقارير الطالب السابقة</span>
+            <span><i class="fa-solid fa-folder-open"></i> سجل تقارير الطالب السابقة</span>
             <button class="btn btn-close" style="padding: 4px 10px; font-size: 0.8rem;" onclick="document.getElementById('studentHistorySection').style.display='none'">إخفاء الأرشيف</button>
         </h3>
         <div id="historyContent">جاري البحث...</div>
@@ -356,19 +476,19 @@
         </tbody>
     </table>
 
-    <div style="margin-top: 40px; display: flex; justify-content: space-between; font-weight: bold;">
+    <div style="margin-top: 45px; display: flex; justify-content: space-between; font-weight: 700; border-top: 1px dashed var(--border); padding-top: 20px;">
         <div>توقيع المرشد الطلابي: ........................</div>
         <div>توقيع معلم المادة (أ. عبدالعزيز الفيفي): ........................</div>
     </div>
 
     <!-- أزرار التحكم -->
     <div class="actions no-print">
-        <button class="btn btn-save-report" id="btnSaveReport" onclick="saveCurrentReports()">💾 حفظ جميع التقارير</button>
-        <button class="btn btn-saved-list" id="btnSavedList" onclick="openSavedReportsModal()">📂 التقارير المحفوظة</button>
-        <button class="btn btn-share" id="btnShareLink" onclick="shareCounselorLink()">🔗 مشاركة رابط المرشد</button>
-        <button class="btn btn-preview" onclick="showPreview()">🔍 معاينة قبل الحفظ</button>
-        <button class="btn btn-pdf" id="btnDownloadPdf" onclick="downloadPDF()">📥 تحميل PDF</button>
-        <button class="btn btn-print" id="btnPrintPage" onclick="window.print()">🖨️ طباعة</button>
+        <button class="btn btn-save-report" id="btnSaveReport" onclick="saveCurrentReports()"><i class="fa-solid fa-floppy-disk"></i> حفظ جميع التقارير</button>
+        <button class="btn btn-saved-list" id="btnSavedList" onclick="openSavedReportsModal()"><i class="fa-solid fa-box-archive"></i> التقارير المحفوظة</button>
+        <button class="btn btn-share" id="btnShareLink" onclick="shareCounselorLink()"><i class="fa-solid fa-link"></i> مشاركة رابط المرشد</button>
+        <button class="btn btn-preview" onclick="showPreview()"><i class="fa-solid fa-eye"></i> معاينة قبل الحفظ</button>
+        <button class="btn btn-pdf" id="btnDownloadPdf" onclick="downloadPDF()"><i class="fa-solid fa-file-pdf"></i> تحميل PDF</button>
+        <button class="btn btn-print" id="btnPrintPage" onclick="window.print()"><i class="fa-solid fa-print"></i> طباعة</button>
     </div>
 </div>
 
@@ -376,7 +496,7 @@
 <div class="modal-overlay" id="previewModal">
     <div class="modal-content">
         <div class="modal-actions no-print" style="display: flex; justify-content: flex-end; gap: 10px; margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 10px;">
-            <button class="btn btn-pdf" onclick="downloadPDF()">📥 حفظ كـ PDF</button>
+            <button class="btn btn-pdf" onclick="downloadPDF()"><i class="fa-solid fa-file-pdf"></i> حفظ كـ PDF</button>
             <button class="btn btn-close" onclick="closePreview()">✖ إغلاق</button>
         </div>
         <div id="previewArea"></div>
@@ -387,7 +507,7 @@
 <div class="modal-overlay" id="savedReportsModal">
     <div class="modal-content">
         <h3 style="color: var(--maroon); margin-top: 0; border-bottom: 2px solid var(--gold); padding-bottom: 10px; display: flex; justify-content: space-between; align-items: center;">
-            <span>📂 جميع التقارير المحفوظة في السحابة</span>
+            <span><i class="fa-solid fa-box-archive"></i> جميع التقارير المحفوظة في السحابة</span>
             <button class="btn btn-close" onclick="closeSavedReportsModal()">إغلاق</button>
         </h3>
         <div id="savedReportsContainer" style="margin-top: 15px;">جاري تحميل التقارير المحفوظة...</div>
@@ -397,7 +517,7 @@
 <!-- نافذة معاينة تقرير مفرد -->
 <div class="modal-overlay" id="singleReportModal">
     <div class="modal-content" style="max-width: 600px;">
-        <h3 style="color: var(--maroon); margin-top: 0; border-bottom: 2px solid var(--gold); padding-bottom: 10px;">📄 تفاصيل التقرير ورد المرشد</h3>
+        <h3 style="color: var(--maroon); margin-top: 0; border-bottom: 2px solid var(--gold); padding-bottom: 10px;"><i class="fa-solid fa-file-lines"></i> تفاصيل التقرير ورد المرشد</h3>
         <div id="singleReportContent" style="line-height: 1.8; font-size: 1rem; margin-bottom: 20px;"></div>
         <div style="display: flex; justify-content: flex-end;">
             <button class="btn btn-close" onclick="closeSingleReportModal()">إغلاق</button>
@@ -408,7 +528,7 @@
 <!-- نافذة تعديل التقرير -->
 <div class="modal-overlay" id="editReportModal">
     <div class="modal-content" style="max-width: 500px;">
-        <h3 style="color: var(--maroon); margin-top: 0; border-bottom: 2px solid var(--gold); padding-bottom: 10px;">✏️ تعديل بيانات التقرير</h3>
+        <h3 style="color: var(--maroon); margin-top: 0; border-bottom: 2px solid var(--gold); padding-bottom: 10px;"><i class="fa-solid fa-pen-to-square"></i> تعديل بيانات التقرير</h3>
         <input type="hidden" id="editDocId">
         
         <div style="margin-bottom: 12px;">
@@ -422,7 +542,7 @@
         </div>
 
         <div style="display: flex; justify-content: flex-end; gap: 10px;">
-            <button class="btn btn-add" onclick="saveEditedReport()">💾 حفظ التعديل</button>
+            <button class="btn btn-add" onclick="saveEditedReport()"><i class="fa-solid fa-floppy-disk"></i> حفظ التعديل</button>
             <button class="btn btn-close" onclick="closeEditReportModal()">إلغاء</button>
         </div>
     </div>
@@ -468,6 +588,13 @@
             { value: "2. عدم مشاركة مطلقاً", text: "2. عدم مشاركة مطلقاً" }
         ]
     };
+
+    function showToast(message) {
+        const toast = document.getElementById("toast");
+        document.getElementById("toastMsg").textContent = message;
+        toast.classList.add("show");
+        setTimeout(() => toast.classList.remove("show"), 3000);
+    }
 
     function loadStudentsList() {
         db.collection("allowed_students").orderBy("name").get().then((snapshot) => {
@@ -520,7 +647,7 @@
         const historyTitle = document.getElementById("historyTitle").querySelector("span");
         const historyContent = document.getElementById("historyContent");
 
-        historyTitle.textContent = `📂 سجل تقارير الطالب السابقة: ${studentName}`;
+        historyTitle.innerHTML = `<i class="fa-solid fa-folder-open"></i> سجل تقارير الطالب السابقة: ${studentName}`;
         historyContent.innerHTML = "جاري البحث في الأرشيف...";
         historySection.style.display = "block";
 
@@ -544,12 +671,12 @@
                         <div style="font-weight: bold; color: var(--maroon); margin-bottom: 5px;">📅 تاريخ التحويل: ${dateStr}</div>
                         <div style="font-size: 0.85rem; margin-bottom: 4px;"><strong>المخالفات:</strong> ${violationsList}</div>
                         <div style="font-size: 0.85rem; margin-bottom: 4px;"><strong>ملاحظاتك:</strong> ${data.notes || 'لا توجد ملاحظات'}</div>
-                        <div style="font-size: 0.85rem; color: #0066cc; margin-bottom: 8px;"><strong>رد المرشد الطلابي:</strong> ${data.reply || 'لم يتم الرد بعد'}</div>
+                        <div style="font-size: 0.85rem; color: #0284c7; margin-bottom: 8px;"><strong>رد المرشد الطلابي:</strong> ${data.reply || 'لم يتم الرد بعد'}</div>
                         
-                        <div class="history-card-actions no-print">
-                            <button class="btn-view-report" onclick="openSingleReport('${data.name}', '${dateStr}', \`${violationsList}\`, \`${data.notes || 'لا توجد'}\`, \`${data.reply || 'لم يتم الرد بعد'}\`)">👁️ معاينة</button>
-                            <button class="btn-edit-report" onclick="openEditReportModal('${docId}', '${data.name}', \`${data.notes || ''}\`)">✏️ تعديل</button>
-                            <button class="btn-remove" onclick="deleteHistoryRecord('${docId}', '${studentName}')">🗑️ حذف</button>
+                        <div style="display: flex; gap: 8px; justify-content: flex-end;" class="no-print">
+                            <button class="btn-view-report" onclick="openSingleReport('${data.name}', '${dateStr}', \`${violationsList}\`, \`${data.notes || 'لا توجد'}\`, \`${data.reply || 'لم يتم الرد بعد'}\`)"><i class="fa-solid fa-eye"></i> معاينة</button>
+                            <button class="btn-edit-report" onclick="openEditReportModal('${docId}', '${data.name}', \`${data.notes || ''}\`)"><i class="fa-solid fa-pen"></i> تعديل</button>
+                            <button class="btn-remove" onclick="deleteHistoryRecord('${docId}', '${studentName}')"><i class="fa-solid fa-trash"></i> حذف</button>
                         </div>
                     </div>
                 `;
@@ -584,7 +711,7 @@
                 name: name,
                 notes: notes
             });
-            alert("تم حفظ التعديلات بنجاح! ✅");
+            showToast("تم حفظ التعديلات بنجاح!");
             closeEditReportModal();
             fetchStudentHistory(name);
         } catch (error) {
@@ -593,11 +720,7 @@
     }
 
     async function saveSingleStudent(id, studentName) {
-        try {
-            alert(`تم حفظ بيانات الطالب (${studentName}) ومخالفاته بنجاح في السحابة! ✅`);
-        } catch (error) {
-            alert("حدث خطأ أثناء الحفظ.");
-        }
+        showToast(`تم حفظ تقرير الطالب (${studentName}) بنجاح!`);
     }
 
     async function saveCurrentReports() {
@@ -605,7 +728,7 @@
         if (rows.length === 0) return alert("لا توجد بيانات طلاب في القائمة الحالية لحفظها.");
 
         if (confirm("هل تريد حفظ وتثبيت جميع هذه التقارير في السحابة؟")) {
-            alert("تم حفظ جميع التقارير بنجاح وتثبيتها في السحابة! ✅ يمكنك استعراضها في زر (التقارير المحفوظة).");
+            showToast("تم حفظ جميع التقارير بنجاح وأرشفتها!");
         }
     }
 
@@ -636,12 +759,12 @@
                         </div>
                         <div style="font-size: 0.85rem; margin-bottom: 4px;"><strong>المخالفات المسجلة:</strong> ${violationsList}</div>
                         <div style="font-size: 0.85rem; margin-bottom: 4px;"><strong>ملاحظات المعلم:</strong> ${data.notes || 'لا توجد'}</div>
-                        <div style="font-size: 0.85rem; color: #0066cc; margin-bottom: 8px;"><strong>رد المرشد:</strong> ${data.reply || 'لم يتم الرد بعد'}</div>
+                        <div style="font-size: 0.85rem; color: #0284c7; margin-bottom: 8px;"><strong>رد المرشد:</strong> ${data.reply || 'لم يتم الرد بعد'}</div>
                         
                         <div style="display: flex; gap: 8px; justify-content: flex-end;">
-                            <button class="btn-view-report" onclick="openSingleReport('${data.name}', '${dateStr}', \`${violationsList}\`, \`${data.notes || 'لا توجد'}\`, \`${data.reply || 'لم يتم الرد بعد'}\`)">👁️ معاينة</button>
-                            <button class="btn-edit-report" onclick="openEditReportModal('${docId}', '${data.name}', \`${data.notes || ''}\`)">✏️ تعديل</button>
-                            <button class="btn-remove" onclick="deleteSavedReport('${docId}')">🗑️ حذف</button>
+                            <button class="btn-view-report" onclick="openSingleReport('${data.name}', '${dateStr}', \`${violationsList}\`, \`${data.notes || 'لا توجد'}\`, \`${data.reply || 'لم يتم الرد بعد'}\`)"><i class="fa-solid fa-eye"></i> معاينة</button>
+                            <button class="btn-edit-report" onclick="openEditReportModal('${docId}', '${data.name}', \`${data.notes || ''}\`)"><i class="fa-solid fa-pen"></i> تعديل</button>
+                            <button class="btn-remove" onclick="deleteSavedReport('${docId}')"><i class="fa-solid fa-trash"></i> حذف</button>
                         </div>
                     </div>
                 `;
@@ -661,7 +784,7 @@
         if (confirm("حذف هذا التقرير المحفوظ من السحابة؟")) {
             try {
                 await db.collection("referral_list").doc(docId).delete();
-                alert("تم الحذف بنجاح!");
+                showToast("تم الحذف بنجاح!");
                 openSavedReportsModal();
             } catch (error) {
                 alert("حدث خطأ أثناء الحذف.");
@@ -676,7 +799,7 @@
             <p><strong>المخالفات المسجلة:</strong> ${violations}</p>
             <p><strong>ملاحظات المعلم:</strong> ${notes}</p>
             <hr style="border: 0; border-top: 1px solid #ddd; margin: 15px 0;">
-            <p><strong>رد المرشد الطلابي:</strong> <span style="color: #0066cc; font-weight: bold;">${reply}</span></p>
+            <p><strong>رد المرشد الطلابي:</strong> <span style="color: #0284c7; font-weight: bold;">${reply}</span></p>
         `;
         document.getElementById('singleReportContent').innerHTML = content;
         document.getElementById('singleReportModal').style.display = 'flex';
@@ -690,7 +813,7 @@
         if (confirm("هل أنت متأكد من حذف هذا السجل من الأرشيف؟")) {
             try {
                 await db.collection("referral_list").doc(docId).delete();
-                alert("تم حذف السجل بنجاح! 🗑️");
+                showToast("تم حذف السجل بنجاح!");
                 fetchStudentHistory(studentName);
             } catch (error) {
                 alert("حدث خطأ أثناء الحذف.");
@@ -722,12 +845,12 @@
             document.getElementById("searchInput").value = "";
             selectedStudentName = "";
             document.getElementById("studentHistorySection").style.display = "none";
+            showToast(`تم إدراج الطالب (${studentName}) للقائمة!`);
         } catch (e) {
             console.error(e);
         }
     }
 
-    // الاستماع للتغييرات السحابية
     function listenToCloudReferrals() {
         db.collection("referral_list").orderBy("createdAt", "asc").onSnapshot(snapshot => {
             const tbody = document.getElementById("tableBody");
@@ -759,29 +882,26 @@
                             <option value="">-- اختر العدد --</option>
                         </select>
                         
-                        <button class="btn-add-violation" ${isCounselorView ? 'style="display:none;"' : ''} onclick="addViolationToStudent('${id}')">➕ إضافة المخالفة للقائمة</button>
+                        <button class="btn-add-violation" ${isCounselorView ? 'style="display:none;"' : ''} onclick="addViolationToStudent('${id}')"><i class="fa-solid fa-circle-plus"></i> إضافة المخالفة للقائمة</button>
                     </td>
                     <td>
-                        <div id="violation_tags_${id}" class="violation-tags-list">
-                            <!-- تُعرض شارات المخالفات المضافة هنا -->
-                        </div>
+                        <div id="violation_tags_${id}" class="violation-tags-list"></div>
                     </td>
                     <td>
                         <textarea class="notes-input" ${isCounselorView ? 'disabled' : ''} placeholder="سلوكيات وملاحظات المعلم..." onblur="updateCloudField('${id}', 'notes', this.value)">${data.notes || ''}</textarea>
                         <div id="counselor_box_${id}" style="display:none; margin-top: 5px;">
                             <textarea id="reply_${id}" class="counselor-reply" placeholder="اكتب رد المرشد الطلابي هنا...">${data.reply !== "لم يتم الرد بعد" ? data.reply : ''}</textarea>
-                            <button class="btn-save-reply" onclick="saveReply('${id}')">💾 حفظ رد المرشد</button>
+                            <button class="btn-save-reply" onclick="saveReply('${id}')"><i class="fa-solid fa-paper-plane"></i> حفظ رد المرشد</button>
                         </div>
                     </td>
                     <td class="no-print" style="display: flex; gap: 4px; justify-content: center; align-items: center; padding-top: 15px;">
-                        <button class="btn-save-student" ${isCounselorView ? 'style="display:none;"' : ''} onclick="saveSingleStudent('${id}', '${data.name}')">💾 حفظ</button>
-                        <button class="btn-view-report" onclick="openSingleReport('${data.name}', 'الحالي', \`${violationsSummaryText}\`, \`${data.notes || 'لا توجد'}\`, \`${data.reply || 'لم يتم الرد بعد'}\`)">👁️</button>
-                        <button class="btn-remove" ${isCounselorView ? 'style="display:none;"' : ''} onclick="deleteCloudStudent('${id}')">🗑️</button>
+                        <button class="btn-save-student" ${isCounselorView ? 'style="display:none;"' : ''} onclick="saveSingleStudent('${id}', '${data.name}')" title="حفظ الطالب"><i class="fa-solid fa-floppy-disk"></i></button>
+                        <button class="btn-view-report" onclick="openSingleReport('${data.name}', 'الحالي', \`${violationsSummaryText}\`, \`${data.notes || 'لا توجد'}\`, \`${data.reply || 'لم يتم الرد بعد'}\`)" title="معاينة"><i class="fa-solid fa-eye"></i></button>
+                        <button class="btn-remove" ${isCounselorView ? 'style="display:none;"' : ''} onclick="deleteCloudStudent('${id}')" title="حذف"><i class="fa-solid fa-trash"></i></button>
                     </td>
                 `;
                 tbody.appendChild(row);
 
-                // عرض بطاقات المخالفات المضافة لهذا الطالب
                 renderStudentViolationTags(id, currentViolations);
             });
 
@@ -830,6 +950,7 @@
             await docRef.update({ violations: currentArray });
             typeSelect.value = "";
             countSelect.innerHTML = '<option value="">-- اختر العدد --</option>';
+            showToast("تمت إضافة المخالفة للقائمة بنجاح!");
         }
     }
 
@@ -840,6 +961,7 @@
             let currentArray = doc.data().violations || [];
             currentArray.splice(indexToRemove, 1);
             await docRef.update({ violations: currentArray });
+            showToast("تم حذف المخالفة!");
         }
     }
 
@@ -850,7 +972,7 @@
         container.innerHTML = "";
 
         if (!violationsArray || violationsArray.length === 0) {
-            container.innerHTML = '<span style="color: #999; font-size: 0.8rem;">لا توجد مخالفات مضافة</span>';
+            container.innerHTML = '<span style="color: #94a3b8; font-size: 0.8rem; font-style: italic;">لا توجد مخالفات مضافة</span>';
             return;
         }
 
@@ -859,7 +981,7 @@
             tag.className = "violation-tag";
             tag.innerHTML = `
                 <span>• ${vItem}</span>
-                ${!isCounselorView ? `<button class="btn-remove-tag no-print" onclick="removeViolationFromStudent('${id}',${index})" title="حذف المخالفة">✖</button>` : ''}
+                ${!isCounselorView ? `<button class="btn-remove-tag no-print" onclick="removeViolationFromStudent('${id}',${index})" title="حذف المخالفة"><i class="fa-solid fa-xmark"></i></button>` : ''}
             `;
             container.appendChild(tag);
         });
@@ -875,7 +997,7 @@
         const replyText = document.getElementById(`reply_${id}`).value;
         try {
             await db.collection("referral_list").doc(id).update({ reply: replyText });
-            alert("تم حفظ وإرسال الرد بنجاح إلى المعلم! ✅");
+            showToast("تم حفظ وإرسال الرد إلى المعلم!");
         } catch (error) {
             alert("حدث خطأ أثناء حفظ الرد.");
         }
@@ -884,6 +1006,7 @@
     async function deleteCloudStudent(id) {
         if(!isCounselorView && confirm("إزالة هذا الطالب من القائمة الحالية؟")) {
             await db.collection("referral_list").doc(id).delete();
+            showToast("تم إزالة الطالب من القائمة!");
         }
     }
 
@@ -891,7 +1014,7 @@
         const currentUrl = window.location.href.split('?')[0];
         const counselorUrl = currentUrl + "?mode=counselor";
         navigator.clipboard.writeText(counselorUrl).then(() => {
-            alert("تم نسخ رابط المرشد الطلابي بنجاح! 📋\nأرسله للمرشد، وعندما يفتحه ستظهر له حصرياً خانة وأزرار حفظ الردود الخاصة به.");
+            showToast("تم نسخ رابط المرشد الطلابي بنجاح!");
         });
     }
 
