@@ -120,7 +120,7 @@
 
         select.violation-select, select.count-select {
             width: 100%;
-            padding: 8px;
+            padding: 7px;
             border-radius: 6px;
             border: 1px solid #ccc;
             font-size: 0.85rem;
@@ -130,11 +130,6 @@
             cursor: pointer;
             font-family: inherit;
             margin-bottom: 4px;
-        }
-
-        select.violation-select:focus, select.count-select:focus {
-            border-color: var(--maroon);
-            box-shadow: 0 0 5px rgba(128,0,0,0.2);
         }
 
         .history-section {
@@ -195,9 +190,41 @@
             background-color: #fdfdfd;
         }
 
+        /* تنسيق قائمة المخالفات المضافة */
+        .violation-tags-list {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            margin-top: 6px;
+            text-align: right;
+        }
+
+        .violation-tag {
+            background-color: #fef3c7;
+            border: 1px solid #f59e0b;
+            color: #92400e;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: bold;
+        }
+
+        .btn-remove-tag {
+            background: transparent;
+            border: none;
+            color: #dc2626;
+            cursor: pointer;
+            font-size: 0.9rem;
+            padding: 0 4px;
+            font-weight: bold;
+        }
+
         textarea.notes-input, textarea.counselor-reply {
             width: 100%;
-            min-height: 50px;
+            min-height: 55px;
             padding: 6px;
             border: 1px solid #ccc;
             border-radius: 4px;
@@ -232,6 +259,7 @@
         }
 
         .btn-add { background: var(--maroon); color: white; }
+        .btn-add-violation { background: #d97706; color: white; padding: 4px 8px; font-size: 0.75rem; border-radius: 4px; cursor: pointer; border: none; width: 100%; margin-top: 2px; }
         .btn-save-report { background: #2980b9; color: white; }
         .btn-saved-list { background: #d35400; color: white; }
         .btn-share { background: #8e44ad; color: white; }
@@ -268,7 +296,7 @@
         }
 
         @media print {
-            .select-section, .history-section, .actions, .btn-remove, .btn-edit-report, .btn-view-report, .btn-save-report, .btn-saved-list, .btn-save-student, .btn-save-reply, .no-print, .modal-overlay {
+            .select-section, .history-section, .actions, .btn-remove, .btn-edit-report, .btn-view-report, .btn-save-report, .btn-saved-list, .btn-save-student, .btn-save-reply, .btn-add-violation, .btn-remove-tag, .no-print, .modal-overlay {
                 display: none !important;
             }
             body { background: white; padding: 0; }
@@ -311,16 +339,16 @@
         <div id="historyContent">جاري البحث...</div>
     </div>
 
-    <!-- جدول المخالفات بدعم قائمتين (نوع المخالفة + العدد/التكرار) -->
+    <!-- جدول المخالفات المتعددة -->
     <table id="referralTable">
         <thead>
             <tr>
                 <th style="width: 5%;">#</th>
-                <th style="width: 22%;">اسم الطالب</th>
-                <th style="width: 18%;">نوع المخالفة</th>
-                <th style="width: 18%;">العدد / التكرار</th>
-                <th style="width: 20%;">ملاحظات وسلوكيات أخرى</th>
-                <th class="no-print" style="width: 17%;">الإجراءات</th>
+                <th style="width: 20%;">اسم الطالب</th>
+                <th style="width: 25%;" class="no-print">اختيار مخالفة وإضافتها</th>
+                <th style="width: 25%;">قائمة المخالفات المسجلة للطالب</th>
+                <th style="width: 18%;">ملاحظات وسلوكيات المعلم</th>
+                <th class="no-print" style="width: 12%;">الإجراءات</th>
             </tr>
         </thead>
         <tbody id="tableBody">
@@ -377,7 +405,7 @@
     </div>
 </div>
 
-<!-- نافذة تعديل التقرير بالقائمتين -->
+<!-- نافذة تعديل التقرير -->
 <div class="modal-overlay" id="editReportModal">
     <div class="modal-content" style="max-width: 500px;">
         <h3 style="color: var(--maroon); margin-top: 0; border-bottom: 2px solid var(--gold); padding-bottom: 10px;">✏️ تعديل بيانات التقرير</h3>
@@ -388,26 +416,8 @@
             <input type="text" id="editStudentName" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;">
         </div>
 
-        <div style="margin-bottom: 12px;">
-            <label style="display: block; font-weight: bold; margin-bottom: 4px;">نوع المخالفة:</label>
-            <select id="editViolationType" class="violation-select" onchange="updateModalCountDropdown()">
-                <option value="لا توجد مخالفة">-- لا توجد مخالفة --</option>
-                <option value="عدم إحضار الواجبات">عدم إحضار الواجبات</option>
-                <option value="عدم إحضار البحث">عدم إحضار البحث</option>
-                <option value="كثرة النوم">كثرة النوم</option>
-                <option value="ضعف المشاركة">ضعف المشاركة</option>
-            </select>
-        </div>
-
-        <div style="margin-bottom: 12px;">
-            <label style="display: block; font-weight: bold; margin-bottom: 4px;">العدد / التكرار:</label>
-            <select id="editViolationCount" class="count-select">
-                <option value="لا يوجد">-- اختر العدد --</option>
-            </select>
-        </div>
-
         <div style="margin-bottom: 15px;">
-            <label style="display: block; font-weight: bold; margin-bottom: 4px;">ملاحظات وسلوكيات أخرى:</label>
+            <label style="display: block; font-weight: bold; margin-bottom: 4px;">ملاحظات وسلوكيات المعلم:</label>
             <textarea id="editNotes" style="width: 100%; min-height: 80px; padding: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;"></textarea>
         </div>
 
@@ -437,7 +447,6 @@
     const urlParams = new URLSearchParams(window.location.search);
     const isCounselorView = urlParams.get('mode') === 'counselor';
 
-    // خيارات الأعداد والتكرار بناءً على نوع المخالفة
     const countOptionsMap = {
         "عدم إحضار الواجبات": [
             { value: "واجب 1", text: "واجب 1" },
@@ -528,18 +537,18 @@
                 const data = doc.data();
                 const docId = doc.id;
                 const dateStr = data.createdAt ? new Date(data.createdAt.toDate()).toLocaleDateString('ar-SA') : 'تاريخ غير محدد';
-                const violationText = (data.violationType && data.violationType !== 'لا توجد مخالفة') ? `${data.violationType} (${data.violationCount || ''})` : 'لا توجد مخالفة';
+                const violationsList = (data.violations && data.violations.length > 0) ? data.violations.join(' | ') : 'لا توجد مخالفات';
                 
                 html += `
                     <div class="history-card" id="history_card_${docId}">
                         <div style="font-weight: bold; color: var(--maroon); margin-bottom: 5px;">📅 تاريخ التحويل: ${dateStr}</div>
-                        <div style="font-size: 0.85rem; margin-bottom: 4px;"><strong>المخالفة:</strong> ${violationText}</div>
+                        <div style="font-size: 0.85rem; margin-bottom: 4px;"><strong>المخالفات:</strong> ${violationsList}</div>
                         <div style="font-size: 0.85rem; margin-bottom: 4px;"><strong>ملاحظاتك:</strong> ${data.notes || 'لا توجد ملاحظات'}</div>
                         <div style="font-size: 0.85rem; color: #0066cc; margin-bottom: 8px;"><strong>رد المرشد الطلابي:</strong> ${data.reply || 'لم يتم الرد بعد'}</div>
                         
                         <div class="history-card-actions no-print">
-                            <button class="btn-view-report" onclick="openSingleReport('${data.name}', '${dateStr}', '${violationText}', \`${data.notes || 'لا توجد'}\`, \`${data.reply || 'لم يتم الرد بعد'}\`)">👁️ معاينة</button>
-                            <button class="btn-edit-report" onclick="openEditReportModal('${docId}', '${data.name}', '${data.violationType || ''}', '${data.violationCount || ''}', \`${data.notes || ''}\`)">✏️ تعديل</button>
+                            <button class="btn-view-report" onclick="openSingleReport('${data.name}', '${dateStr}', \`${violationsList}\`, \`${data.notes || 'لا توجد'}\`, \`${data.reply || 'لم يتم الرد بعد'}\`)">👁️ معاينة</button>
+                            <button class="btn-edit-report" onclick="openEditReportModal('${docId}', '${data.name}', \`${data.notes || ''}\`)">✏️ تعديل</button>
                             <button class="btn-remove" onclick="deleteHistoryRecord('${docId}', '${studentName}')">🗑️ حذف</button>
                         </div>
                     </div>
@@ -552,32 +561,9 @@
         }
     }
 
-    // تحديث قائمة "العدد" ديناميكياً داخل النافذة المنبثقة
-    function updateModalCountDropdown() {
-        const typeSelect = document.getElementById("editViolationType");
-        const countSelect = document.getElementById("editViolationCount");
-        const selectedType = typeSelect.value;
-
-        countSelect.innerHTML = '<option value="لا يوجد">-- اختر العدد --</option>';
-
-        if (countOptionsMap[selectedType]) {
-            countOptionsMap[selectedType].forEach(opt => {
-                const el = document.createElement("option");
-                el.value = opt.value;
-                el.textContent = opt.text;
-                countSelect.appendChild(el);
-            });
-        }
-    }
-
-    function openEditReportModal(id, name, vType, vCount, notes) {
+    function openEditReportModal(id, name, notes) {
         document.getElementById('editDocId').value = id;
         document.getElementById('editStudentName').value = name;
-        document.getElementById('editViolationType').value = vType || "لا توجد مخالفة";
-        
-        updateModalCountDropdown();
-        document.getElementById('editViolationCount').value = vCount || "لا يوجد";
-        
         document.getElementById('editNotes').value = notes;
         document.getElementById('editReportModal').style.display = 'flex';
     }
@@ -589,8 +575,6 @@
     async function saveEditedReport() {
         const id = document.getElementById('editDocId').value;
         const name = document.getElementById('editStudentName').value.trim();
-        const vType = document.getElementById('editViolationType').value;
-        const vCount = document.getElementById('editViolationCount').value;
         const notes = document.getElementById('editNotes').value.trim();
 
         if (!name) return alert("اسم الطالب مطلوب");
@@ -598,8 +582,6 @@
         try {
             await db.collection("referral_list").doc(id).update({
                 name: name,
-                violationType: vType,
-                violationCount: vCount,
                 notes: notes
             });
             alert("تم حفظ التعديلات بنجاح! ✅");
@@ -612,7 +594,7 @@
 
     async function saveSingleStudent(id, studentName) {
         try {
-            alert(`تم حفظ بيانات الطالب (${studentName}) بنجاح في السحابة! ✅`);
+            alert(`تم حفظ بيانات الطالب (${studentName}) ومخالفاته بنجاح في السحابة! ✅`);
         } catch (error) {
             alert("حدث خطأ أثناء الحفظ.");
         }
@@ -622,7 +604,7 @@
         const rows = document.querySelectorAll("#tableBody tr");
         if (rows.length === 0) return alert("لا توجد بيانات طلاب في القائمة الحالية لحفظها.");
 
-        if (confirm("هل تريد حفظ وتثبيت هذه التقارير في السحابة وأرشفتها؟")) {
+        if (confirm("هل تريد حفظ وتثبيت جميع هذه التقارير في السحابة؟")) {
             alert("تم حفظ جميع التقارير بنجاح وتثبيتها في السحابة! ✅ يمكنك استعراضها في زر (التقارير المحفوظة).");
         }
     }
@@ -644,7 +626,7 @@
                 const data = doc.data();
                 const docId = doc.id;
                 const dateStr = data.createdAt ? new Date(data.createdAt.toDate()).toLocaleDateString('ar-SA') : 'تاريخ غير محدد';
-                const violationText = (data.violationType && data.violationType !== 'لا توجد مخالفة') ? `${data.violationType} (${data.violationCount || ''})` : 'لا توجد مخالفة';
+                const violationsList = (data.violations && data.violations.length > 0) ? data.violations.join(' | ') : 'لا توجد مخالفات';
 
                 html += `
                     <div class="history-card">
@@ -652,13 +634,13 @@
                             <span>🎓 الطالب: ${data.name}</span>
                             <span>📅 التاريخ: ${dateStr}</span>
                         </div>
-                        <div style="font-size: 0.85rem; margin-bottom: 4px;"><strong>المخالفة:</strong> ${violationText}</div>
+                        <div style="font-size: 0.85rem; margin-bottom: 4px;"><strong>المخالفات المسجلة:</strong> ${violationsList}</div>
                         <div style="font-size: 0.85rem; margin-bottom: 4px;"><strong>ملاحظات المعلم:</strong> ${data.notes || 'لا توجد'}</div>
                         <div style="font-size: 0.85rem; color: #0066cc; margin-bottom: 8px;"><strong>رد المرشد:</strong> ${data.reply || 'لم يتم الرد بعد'}</div>
                         
                         <div style="display: flex; gap: 8px; justify-content: flex-end;">
-                            <button class="btn-view-report" onclick="openSingleReport('${data.name}', '${dateStr}', '${violationText}', \`${data.notes || 'لا توجد'}\`, \`${data.reply || 'لم يتم الرد بعد'}\`)">👁️ معاينة</button>
-                            <button class="btn-edit-report" onclick="openEditReportModal('${docId}', '${data.name}', '${data.violationType || ''}', '${data.violationCount || ''}', \`${data.notes || ''}\`)">✏️ تعديل</button>
+                            <button class="btn-view-report" onclick="openSingleReport('${data.name}', '${dateStr}', \`${violationsList}\`, \`${data.notes || 'لا توجد'}\`, \`${data.reply || 'لم يتم الرد بعد'}\`)">👁️ معاينة</button>
+                            <button class="btn-edit-report" onclick="openEditReportModal('${docId}', '${data.name}', \`${data.notes || ''}\`)">✏️ تعديل</button>
                             <button class="btn-remove" onclick="deleteSavedReport('${docId}')">🗑️ حذف</button>
                         </div>
                     </div>
@@ -687,11 +669,11 @@
         }
     }
 
-    function openSingleReport(name, dateStr, violation, notes, reply) {
+    function openSingleReport(name, dateStr, violations, notes, reply) {
         const content = `
             <p><strong>اسم الطالب:</strong> ${name}</p>
             <p><strong>تاريخ التحويل:</strong> ${dateStr}</p>
-            <p><strong>المخالفة المسجلة:</strong> ${violation}</p>
+            <p><strong>المخالفات المسجلة:</strong> ${violations}</p>
             <p><strong>ملاحظات المعلم:</strong> ${notes}</p>
             <hr style="border: 0; border-top: 1px solid #ddd; margin: 15px 0;">
             <p><strong>رد المرشد الطلابي:</strong> <span style="color: #0066cc; font-weight: bold;">${reply}</span></p>
@@ -732,8 +714,7 @@
         try {
             await db.collection("referral_list").doc(studentId).set({
                 name: studentName,
-                violationType: "لا توجد مخالفة",
-                violationCount: "لا يوجد",
+                violations: [],
                 notes: "",
                 reply: "لم يتم الرد بعد",
                 createdAt: firebase.firestore.FieldValue.serverTimestamp()
@@ -746,7 +727,7 @@
         }
     }
 
-    // الاستماع للتغييرات السحابية وتحديث الجدول مع دعم القائمتين المنسدلتين الديناميكيتين
+    // الاستماع للتغييرات السحابية
     function listenToCloudReferrals() {
         db.collection("referral_list").orderBy("createdAt", "asc").onSnapshot(snapshot => {
             const tbody = document.getElementById("tableBody");
@@ -758,27 +739,32 @@
                 const id = doc.id;
                 studentCount++;
 
-                const currentType = data.violationType || "لا توجد مخالفة";
-                const currentCount = data.violationCount || "لا يوجد";
-                const violationSummary = (currentType !== 'لا توجد مخالفة') ? `${currentType} (${currentCount})` : 'لا توجد مخالفة';
+                const currentViolations = data.violations || [];
+                const violationsSummaryText = currentViolations.length > 0 ? currentViolations.join(' ، ') : 'لا توجد مخالفات مسجلة';
 
                 const row = document.createElement("tr");
                 row.innerHTML = `
                     <td>${studentCount}</td>
                     <td style="text-align: right; font-weight: bold;">${data.name}</td>
-                    <td>
-                        <select class="violation-select" ${isCounselorView ? 'disabled' : ''} onchange="handleTypeChange('${id}', this.value)">
-                            <option value="لا توجد مخالفة" ${currentType === 'لا توجد مخالفة' ? 'selected' : ''}>-- اختر نوع المخالفة --</option>
-                            <option value="عدم إحضار الواجبات" ${currentType === 'عدم إحضار الواجبات' ? 'selected' : ''}>عدم إحضار الواجبات</option>
-                            <option value="عدم إحضار البحث" ${currentType === 'عدم إحضار البحث' ? 'selected' : ''}>عدم إحضار البحث</option>
-                            <option value="كثرة النوم" ${currentType === 'كثرة النوم' ? 'selected' : ''}>كثرة النوم</option>
-                            <option value="ضعف المشاركة" ${currentType === 'ضعف المشاركة' ? 'selected' : ''}>ضعف المشاركة</option>
+                    <td class="no-print">
+                        <select id="type_select_${id}" class="violation-select" ${isCounselorView ? 'disabled' : ''} onchange="onTypeSelectChange('${id}')">
+                            <option value="">-- اختر نوع المخالفة --</option>
+                            <option value="عدم إحضار الواجبات">عدم إحضار الواجبات</option>
+                            <option value="عدم إحضار البحث">عدم إحضار البحث</option>
+                            <option value="كثرة النوم">كثرة النوم</option>
+                            <option value="ضعف المشاركة">ضعف المشاركة</option>
                         </select>
+                        
+                        <select id="count_select_${id}" class="count-select" ${isCounselorView ? 'disabled' : ''}>
+                            <option value="">-- اختر العدد --</option>
+                        </select>
+                        
+                        <button class="btn-add-violation" ${isCounselorView ? 'style="display:none;"' : ''} onclick="addViolationToStudent('${id}')">➕ إضافة المخالفة للقائمة</button>
                     </td>
                     <td>
-                        <select id="count_select_${id}" class="count-select" ${isCounselorView ? 'disabled' : ''} onchange="updateCloudField('${id}', 'violationCount', this.value)">
-                            <!-- تُملأ القائمة المنسدلة للعدد ديناميكياً -->
-                        </select>
+                        <div id="violation_tags_${id}" class="violation-tags-list">
+                            <!-- تُعرض شارات المخالفات المضافة هنا -->
+                        </div>
                     </td>
                     <td>
                         <textarea class="notes-input" ${isCounselorView ? 'disabled' : ''} placeholder="سلوكيات وملاحظات المعلم..." onblur="updateCloudField('${id}', 'notes', this.value)">${data.notes || ''}</textarea>
@@ -789,14 +775,14 @@
                     </td>
                     <td class="no-print" style="display: flex; gap: 4px; justify-content: center; align-items: center; padding-top: 15px;">
                         <button class="btn-save-student" ${isCounselorView ? 'style="display:none;"' : ''} onclick="saveSingleStudent('${id}', '${data.name}')">💾 حفظ</button>
-                        <button class="btn-view-report" onclick="openSingleReport('${data.name}', 'الحالي', '${violationSummary}', \`${data.notes || 'لا توجد'}\`, \`${data.reply || 'لم يتم الرد بعد'}\`)">👁️ معاينة</button>
+                        <button class="btn-view-report" onclick="openSingleReport('${data.name}', 'الحالي', \`${violationsSummaryText}\`, \`${data.notes || 'لا توجد'}\`, \`${data.reply || 'لم يتم الرد بعد'}\`)">👁️</button>
                         <button class="btn-remove" ${isCounselorView ? 'style="display:none;"' : ''} onclick="deleteCloudStudent('${id}')">🗑️</button>
                     </td>
                 `;
                 tbody.appendChild(row);
 
-                // بناء خيارات قائمة العدد بعد إضافة السطر للجدول
-                renderCountDropdownOptions(id, currentType, currentCount);
+                // عرض بطاقات المخالفات المضافة لهذا الطالب
+                renderStudentViolationTags(id, currentViolations);
             });
 
             if (isCounselorView) {
@@ -806,28 +792,77 @@
         });
     }
 
-    // بناء خيارات قائمة "العدد" بالجدول بناءً على النوع المختار
-    function renderCountDropdownOptions(id, selectedType, selectedCount) {
+    function onTypeSelectChange(id) {
+        const typeSelect = document.getElementById(`type_select_${id}`);
         const countSelect = document.getElementById(`count_select_${id}`);
-        if (!countSelect) return;
+        const selectedType = typeSelect.value;
 
-        countSelect.innerHTML = '<option value="لا يوجد">-- اختر العدد --</option>';
+        countSelect.innerHTML = '<option value="">-- اختر العدد --</option>';
 
         if (countOptionsMap[selectedType]) {
             countOptionsMap[selectedType].forEach(opt => {
                 const optionEl = document.createElement("option");
                 optionEl.value = opt.value;
                 optionEl.textContent = opt.text;
-                if (opt.value === selectedCount) optionEl.selected = true;
                 countSelect.appendChild(optionEl);
             });
         }
     }
 
-    async function handleTypeChange(id, newType) {
-        renderCountDropdownOptions(id, newType, "لا يوجد");
-        await updateCloudField(id, 'violationType', newType);
-        await updateCloudField(id, 'violationCount', "لا يوجد");
+    async function addViolationToStudent(id) {
+        const typeSelect = document.getElementById(`type_select_${id}`);
+        const countSelect = document.getElementById(`count_select_${id}`);
+
+        const typeVal = typeSelect.value;
+        const countVal = countSelect.value;
+
+        if (!typeVal || !countVal) {
+            return alert("يرجى اختيار نوع المخالفة والعدد قبل الضغط على إضافة!");
+        }
+
+        const violationString = `${typeVal}: ${countVal}`;
+
+        const docRef = db.collection("referral_list").doc(id);
+        const doc = await docRef.get();
+        if (doc.exists) {
+            const currentArray = doc.data().violations || [];
+            currentArray.push(violationString);
+            await docRef.update({ violations: currentArray });
+            typeSelect.value = "";
+            countSelect.innerHTML = '<option value="">-- اختر العدد --</option>';
+        }
+    }
+
+    async function removeViolationFromStudent(id, indexToRemove) {
+        const docRef = db.collection("referral_list").doc(id);
+        const doc = await docRef.get();
+        if (doc.exists) {
+            let currentArray = doc.data().violations || [];
+            currentArray.splice(indexToRemove, 1);
+            await docRef.update({ violations: currentArray });
+        }
+    }
+
+    function renderStudentViolationTags(id, violationsArray) {
+        const container = document.getElementById(`violation_tags_${id}`);
+        if (!container) return;
+
+        container.innerHTML = "";
+
+        if (!violationsArray || violationsArray.length === 0) {
+            container.innerHTML = '<span style="color: #999; font-size: 0.8rem;">لا توجد مخالفات مضافة</span>';
+            return;
+        }
+
+        violationsArray.forEach((vItem, index) => {
+            const tag = document.createElement("div");
+            tag.className = "violation-tag";
+            tag.innerHTML = `
+                <span>• ${vItem}</span>
+                ${!isCounselorView ? `<button class="btn-remove-tag no-print" onclick="removeViolationFromStudent('${id}',${index})" title="حذف المخالفة">✖</button>` : ''}
+            `;
+            container.appendChild(tag);
+        });
     }
 
     async function updateCloudField(id, field, value) {
@@ -879,22 +914,6 @@
             }
         });
 
-        const rows = contentClone.querySelectorAll('#tableBody tr');
-        const origRows = document.querySelectorAll('#tableBody tr');
-        rows.forEach((row, idx) => {
-            const typeSel = origRows[idx].querySelector('select.violation-select');
-            const countSel = origRows[idx].querySelector('select.count-select');
-            
-            const typeVal = typeSel ? typeSel.value : '';
-            const countVal = countSel ? countSel.value : '';
-            
-            const typeTd = row.children[2];
-            const countTd = row.children[3];
-            
-            if(typeTd) typeTd.textContent = typeVal;
-            if(countTd) countTd.textContent = countVal;
-        });
-
         const previewArea = document.getElementById('previewArea');
         previewArea.innerHTML = '';
         previewArea.appendChild(contentClone);
@@ -922,22 +941,6 @@
                 div.style.whiteSpace = 'pre-wrap';
                 ta.parentNode.replaceChild(div, ta);
             }
-        });
-
-        const rows = element.querySelectorAll('#tableBody tr');
-        const origRows = document.querySelectorAll('#tableBody tr');
-        rows.forEach((row, idx) => {
-            const typeSel = origRows[idx].querySelector('select.violation-select');
-            const countSel = origRows[idx].querySelector('select.count-select');
-            
-            const typeVal = typeSel ? typeSel.value : '';
-            const countVal = countSel ? countSel.value : '';
-            
-            const typeTd = row.children[2];
-            const countTd = row.children[3];
-            
-            if(typeTd) typeTd.textContent = typeVal;
-            if(countTd) countTd.textContent = countVal;
         });
 
         const options = {
