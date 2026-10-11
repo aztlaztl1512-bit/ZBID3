@@ -28,7 +28,7 @@
         }
 
         .container {
-            max-width: 1000px;
+            max-width: 1100px;
             margin: 0 auto;
             background: #ffffff;
             padding: 30px;
@@ -118,7 +118,7 @@
             font-weight: bold;
         }
 
-        select.violation-select {
+        select.violation-select, select.count-select {
             width: 100%;
             padding: 8px;
             border-radius: 6px;
@@ -129,9 +129,10 @@
             background-color: #fff;
             cursor: pointer;
             font-family: inherit;
+            margin-bottom: 4px;
         }
 
-        select.violation-select:focus {
+        select.violation-select:focus, select.count-select:focus {
             border-color: var(--maroon);
             box-shadow: 0 0 5px rgba(128,0,0,0.2);
         }
@@ -179,9 +180,9 @@
 
         th, td {
             border: 1px solid var(--border);
-            padding: 10px;
+            padding: 8px;
             text-align: center;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             vertical-align: middle;
         }
 
@@ -310,19 +311,20 @@
         <div id="historyContent">جاري البحث...</div>
     </div>
 
-    <!-- جدول الطلاب والمخالفات المنسدلة النظيفة -->
+    <!-- جدول المخالفات بدعم قائمتين (نوع المخالفة + العدد/التكرار) -->
     <table id="referralTable">
         <thead>
             <tr>
                 <th style="width: 5%;">#</th>
-                <th style="width: 25%;">اسم الطالب</th>
-                <th style="width: 28%;">اختر المخالفة والرقم من القائمة المنسدلة</th>
-                <th style="width: 24%;">ملاحظات المعلم وسلوكياته</th>
-                <th class="no-print" style="width: 18%;">الإجراءات</th>
+                <th style="width: 22%;">اسم الطالب</th>
+                <th style="width: 18%;">نوع المخالفة</th>
+                <th style="width: 18%;">العدد / التكرار</th>
+                <th style="width: 20%;">ملاحظات وسلوكيات أخرى</th>
+                <th class="no-print" style="width: 17%;">الإجراءات</th>
             </tr>
         </thead>
         <tbody id="tableBody">
-            <!-- يُضاف الطلاب هنا مبسطين جداً -->
+            <!-- يُضاف الطلاب هنا -->
         </tbody>
     </table>
 
@@ -375,7 +377,7 @@
     </div>
 </div>
 
-<!-- نافذة تعديل التقرير -->
+<!-- نافذة تعديل التقرير بالقائمتين -->
 <div class="modal-overlay" id="editReportModal">
     <div class="modal-content" style="max-width: 500px;">
         <h3 style="color: var(--maroon); margin-top: 0; border-bottom: 2px solid var(--gold); padding-bottom: 10px;">✏️ تعديل بيانات التقرير</h3>
@@ -387,28 +389,20 @@
         </div>
 
         <div style="margin-bottom: 12px;">
-            <label style="display: block; font-weight: bold; margin-bottom: 4px;">المخالفة المسجلة:</label>
-            <select id="editViolation" class="violation-select">
-                <option value="لا توجد مخالفة">لا توجد مخالفة</option>
-                <optgroup label="عدم إحضار الواجبات">
-                    <option value="واجب 1">واجب 1</option>
-                    <option value="واجب 2">واجب 2</option>
-                    <option value="واجب 3">واجب 3</option>
-                    <option value="واجب 4">واجب 4</option>
-                    <option value="واجب 5">واجب 5</option>
-                </optgroup>
-                <optgroup label="عدم إحضار البحث">
-                    <option value="بحث 1 (لم يقدم البحث)">بحث 1 (لم يقدم البحث)</option>
-                    <option value="بحث 2 (البحث غير مكتمل)">بحث 2 (البحث غير مكتمل)</option>
-                </optgroup>
-                <optgroup label="كثرة النوم">
-                    <option value="نوم 1 (نوم خفيف)">نوم 1 (نوم خفيف)</option>
-                    <option value="نوم 2 (نوم متكرر)">نوم 2 (نوم متكرر)</option>
-                </optgroup>
-                <optgroup label="ضعف المشاركة">
-                    <option value="مشاركة 1 (ضعيفة)">مشاركة 1 (ضعيفة)</option>
-                    <option value="مشاركة 2 (عدم مشاركة مطلقاً)">مشاركة 2 (عدم مشاركة مطلقاً)</option>
-                </optgroup>
+            <label style="display: block; font-weight: bold; margin-bottom: 4px;">نوع المخالفة:</label>
+            <select id="editViolationType" class="violation-select" onchange="updateModalCountDropdown()">
+                <option value="لا توجد مخالفة">-- لا توجد مخالفة --</option>
+                <option value="عدم إحضار الواجبات">عدم إحضار الواجبات</option>
+                <option value="عدم إحضار البحث">عدم إحضار البحث</option>
+                <option value="كثرة النوم">كثرة النوم</option>
+                <option value="ضعف المشاركة">ضعف المشاركة</option>
+            </select>
+        </div>
+
+        <div style="margin-bottom: 12px;">
+            <label style="display: block; font-weight: bold; margin-bottom: 4px;">العدد / التكرار:</label>
+            <select id="editViolationCount" class="count-select">
+                <option value="لا يوجد">-- اختر العدد --</option>
             </select>
         </div>
 
@@ -442,6 +436,29 @@
     let selectedStudentName = "";
     const urlParams = new URLSearchParams(window.location.search);
     const isCounselorView = urlParams.get('mode') === 'counselor';
+
+    // خيارات الأعداد والتكرار بناءً على نوع المخالفة
+    const countOptionsMap = {
+        "عدم إحضار الواجبات": [
+            { value: "واجب 1", text: "واجب 1" },
+            { value: "واجب 2", text: "واجب 2" },
+            { value: "واجب 3", text: "واجب 3" },
+            { value: "واجب 4", text: "واجب 4" },
+            { value: "واجب 5", text: "واجب 5" }
+        ],
+        "عدم إحضار البحث": [
+            { value: "1. لم يقدم البحث", text: "1. لم يقدم البحث" },
+            { value: "2. البحث غير مكتمل", text: "2. البحث غير مكتمل" }
+        ],
+        "كثرة النوم": [
+            { value: "1. نوم خفيف", text: "1. نوم خفيف" },
+            { value: "2. نوم متكرر", text: "2. نوم متكرر" }
+        ],
+        "ضعف المشاركة": [
+            { value: "1. مشاركة ضعيفة", text: "1. مشاركة ضعيفة" },
+            { value: "2. عدم مشاركة مطلقاً", text: "2. عدم مشاركة مطلقاً" }
+        ]
+    };
 
     function loadStudentsList() {
         db.collection("allowed_students").orderBy("name").get().then((snapshot) => {
@@ -511,17 +528,18 @@
                 const data = doc.data();
                 const docId = doc.id;
                 const dateStr = data.createdAt ? new Date(data.createdAt.toDate()).toLocaleDateString('ar-SA') : 'تاريخ غير محدد';
+                const violationText = (data.violationType && data.violationType !== 'لا توجد مخالفة') ? `${data.violationType} (${data.violationCount || ''})` : 'لا توجد مخالفة';
                 
                 html += `
                     <div class="history-card" id="history_card_${docId}">
                         <div style="font-weight: bold; color: var(--maroon); margin-bottom: 5px;">📅 تاريخ التحويل: ${dateStr}</div>
-                        <div style="font-size: 0.85rem; margin-bottom: 4px;"><strong>المخالفة:</strong> ${data.violation || 'لا توجد'}</div>
+                        <div style="font-size: 0.85rem; margin-bottom: 4px;"><strong>المخالفة:</strong> ${violationText}</div>
                         <div style="font-size: 0.85rem; margin-bottom: 4px;"><strong>ملاحظاتك:</strong> ${data.notes || 'لا توجد ملاحظات'}</div>
                         <div style="font-size: 0.85rem; color: #0066cc; margin-bottom: 8px;"><strong>رد المرشد الطلابي:</strong> ${data.reply || 'لم يتم الرد بعد'}</div>
                         
                         <div class="history-card-actions no-print">
-                            <button class="btn-view-report" onclick="openSingleReport('${data.name}', '${dateStr}', '${data.violation}', \`${data.notes || 'لا توجد'}\`, \`${data.reply || 'لم يتم الرد بعد'}\`)">👁️ معاينة</button>
-                            <button class="btn-edit-report" onclick="openEditReportModal('${docId}', '${data.name}', '${data.violation}', \`${data.notes || ''}\`)">✏️ تعديل</button>
+                            <button class="btn-view-report" onclick="openSingleReport('${data.name}', '${dateStr}', '${violationText}', \`${data.notes || 'لا توجد'}\`, \`${data.reply || 'لم يتم الرد بعد'}\`)">👁️ معاينة</button>
+                            <button class="btn-edit-report" onclick="openEditReportModal('${docId}', '${data.name}', '${data.violationType || ''}', '${data.violationCount || ''}', \`${data.notes || ''}\`)">✏️ تعديل</button>
                             <button class="btn-remove" onclick="deleteHistoryRecord('${docId}', '${studentName}')">🗑️ حذف</button>
                         </div>
                     </div>
@@ -534,10 +552,32 @@
         }
     }
 
-    function openEditReportModal(id, name, violation, notes) {
+    // تحديث قائمة "العدد" ديناميكياً داخل النافذة المنبثقة
+    function updateModalCountDropdown() {
+        const typeSelect = document.getElementById("editViolationType");
+        const countSelect = document.getElementById("editViolationCount");
+        const selectedType = typeSelect.value;
+
+        countSelect.innerHTML = '<option value="لا يوجد">-- اختر العدد --</option>';
+
+        if (countOptionsMap[selectedType]) {
+            countOptionsMap[selectedType].forEach(opt => {
+                const el = document.createElement("option");
+                el.value = opt.value;
+                el.textContent = opt.text;
+                countSelect.appendChild(el);
+            });
+        }
+    }
+
+    function openEditReportModal(id, name, vType, vCount, notes) {
         document.getElementById('editDocId').value = id;
         document.getElementById('editStudentName').value = name;
-        document.getElementById('editViolation').value = violation || "لا توجد مخالفة";
+        document.getElementById('editViolationType').value = vType || "لا توجد مخالفة";
+        
+        updateModalCountDropdown();
+        document.getElementById('editViolationCount').value = vCount || "لا يوجد";
+        
         document.getElementById('editNotes').value = notes;
         document.getElementById('editReportModal').style.display = 'flex';
     }
@@ -549,7 +589,8 @@
     async function saveEditedReport() {
         const id = document.getElementById('editDocId').value;
         const name = document.getElementById('editStudentName').value.trim();
-        const violation = document.getElementById('editViolation').value;
+        const vType = document.getElementById('editViolationType').value;
+        const vCount = document.getElementById('editViolationCount').value;
         const notes = document.getElementById('editNotes').value.trim();
 
         if (!name) return alert("اسم الطالب مطلوب");
@@ -557,7 +598,8 @@
         try {
             await db.collection("referral_list").doc(id).update({
                 name: name,
-                violation: violation,
+                violationType: vType,
+                violationCount: vCount,
                 notes: notes
             });
             alert("تم حفظ التعديلات بنجاح! ✅");
@@ -602,6 +644,7 @@
                 const data = doc.data();
                 const docId = doc.id;
                 const dateStr = data.createdAt ? new Date(data.createdAt.toDate()).toLocaleDateString('ar-SA') : 'تاريخ غير محدد';
+                const violationText = (data.violationType && data.violationType !== 'لا توجد مخالفة') ? `${data.violationType} (${data.violationCount || ''})` : 'لا توجد مخالفة';
 
                 html += `
                     <div class="history-card">
@@ -609,13 +652,13 @@
                             <span>🎓 الطالب: ${data.name}</span>
                             <span>📅 التاريخ: ${dateStr}</span>
                         </div>
-                        <div style="font-size: 0.85rem; margin-bottom: 4px;"><strong>المخالفة:</strong> ${data.violation || 'لا توجد'}</div>
+                        <div style="font-size: 0.85rem; margin-bottom: 4px;"><strong>المخالفة:</strong> ${violationText}</div>
                         <div style="font-size: 0.85rem; margin-bottom: 4px;"><strong>ملاحظات المعلم:</strong> ${data.notes || 'لا توجد'}</div>
                         <div style="font-size: 0.85rem; color: #0066cc; margin-bottom: 8px;"><strong>رد المرشد:</strong> ${data.reply || 'لم يتم الرد بعد'}</div>
                         
                         <div style="display: flex; gap: 8px; justify-content: flex-end;">
-                            <button class="btn-view-report" onclick="openSingleReport('${data.name}', '${dateStr}', '${data.violation}', \`${data.notes || 'لا توجد'}\`, \`${data.reply || 'لم يتم الرد بعد'}\`)">👁️ معاينة</button>
-                            <button class="btn-edit-report" onclick="openEditReportModal('${docId}', '${data.name}', '${data.violation}', \`${data.notes || ''}\`)">✏️ تعديل</button>
+                            <button class="btn-view-report" onclick="openSingleReport('${data.name}', '${dateStr}', '${violationText}', \`${data.notes || 'لا توجد'}\`, \`${data.reply || 'لم يتم الرد بعد'}\`)">👁️ معاينة</button>
+                            <button class="btn-edit-report" onclick="openEditReportModal('${docId}', '${data.name}', '${data.violationType || ''}', '${data.violationCount || ''}', \`${data.notes || ''}\`)">✏️ تعديل</button>
                             <button class="btn-remove" onclick="deleteSavedReport('${docId}')">🗑️ حذف</button>
                         </div>
                     </div>
@@ -689,7 +732,8 @@
         try {
             await db.collection("referral_list").doc(studentId).set({
                 name: studentName,
-                violation: "لا توجد مخالفة",
+                violationType: "لا توجد مخالفة",
+                violationCount: "لا يوجد",
                 notes: "",
                 reply: "لم يتم الرد بعد",
                 createdAt: firebase.firestore.FieldValue.serverTimestamp()
@@ -702,6 +746,7 @@
         }
     }
 
+    // الاستماع للتغييرات السحابية وتحديث الجدول مع دعم القائمتين المنسدلتين الديناميكيتين
     function listenToCloudReferrals() {
         db.collection("referral_list").orderBy("createdAt", "asc").onSnapshot(snapshot => {
             const tbody = document.getElementById("tableBody");
@@ -713,32 +758,26 @@
                 const id = doc.id;
                 studentCount++;
 
+                const currentType = data.violationType || "لا توجد مخالفة";
+                const currentCount = data.violationCount || "لا يوجد";
+                const violationSummary = (currentType !== 'لا توجد مخالفة') ? `${currentType} (${currentCount})` : 'لا توجد مخالفة';
+
                 const row = document.createElement("tr");
                 row.innerHTML = `
                     <td>${studentCount}</td>
                     <td style="text-align: right; font-weight: bold;">${data.name}</td>
                     <td>
-                        <select class="violation-select" ${isCounselorView ? 'disabled' : ''} onchange="updateCloudField('${id}', 'violation', this.value)">
-                            <option value="لا توجد مخالفة" ${data.violation === 'لا توجد مخالفة' ? 'selected' : ''}>-- اختر المخالفة --</option>
-                            <optgroup label="عدم إحضار الواجبات">
-                                <option value="واجب 1" ${data.violation === 'واجب 1' ? 'selected' : ''}>واجب 1</option>
-                                <option value="واجب 2" ${data.violation === 'واجب 2' ? 'selected' : ''}>واجب 2</option>
-                                <option value="واجب 3" ${data.violation === 'واجب 3' ? 'selected' : ''}>واجب 3</option>
-                                <option value="واجب 4" ${data.violation === 'واجب 4' ? 'selected' : ''}>واجب 4</option>
-                                <option value="واجب 5" ${data.violation === 'واجب 5' ? 'selected' : ''}>واجب 5</option>
-                            </optgroup>
-                            <optgroup label="عدم إحضار البحث">
-                                <option value="بحث 1 (لم يقدم البحث)" ${data.violation === 'بحث 1 (لم يقدم البحث)' ? 'selected' : ''}>بحث 1 (لم يقدم البحث)</option>
-                                <option value="بحث 2 (البحث غير مكتمل)" ${data.violation === 'بحث 2 (البحث غير مكتمل)' ? 'selected' : ''}>بحث 2 (البحث غير مكتمل)</option>
-                            </optgroup>
-                            <optgroup label="كثرة النوم">
-                                <option value="نوم 1 (نوم خفيف)" ${data.violation === 'نوم 1 (نوم خفيف)' ? 'selected' : ''}>نوم 1 (نوم خفيف)</option>
-                                <option value="نوم 2 (نوم متكرر)" ${data.violation === 'نوم 2 (نوم متكرر)' ? 'selected' : ''}>نوم 2 (نوم متكرر)</option>
-                            </optgroup>
-                            <optgroup label="ضعف المشاركة">
-                                <option value="مشاركة 1 (ضعيفة)" ${data.violation === 'مشاركة 1 (ضعيفة)' ? 'selected' : ''}>مشاركة 1 (ضعيفة)</option>
-                                <option value="مشاركة 2 (عدم مشاركة مطلقاً)" ${data.violation === 'مشاركة 2 (عدم مشاركة مطلقاً)' ? 'selected' : ''}>مشاركة 2 (عدم مشاركة مطلقاً)</option>
-                            </optgroup>
+                        <select class="violation-select" ${isCounselorView ? 'disabled' : ''} onchange="handleTypeChange('${id}', this.value)">
+                            <option value="لا توجد مخالفة" ${currentType === 'لا توجد مخالفة' ? 'selected' : ''}>-- اختر نوع المخالفة --</option>
+                            <option value="عدم إحضار الواجبات" ${currentType === 'عدم إحضار الواجبات' ? 'selected' : ''}>عدم إحضار الواجبات</option>
+                            <option value="عدم إحضار البحث" ${currentType === 'عدم إحضار البحث' ? 'selected' : ''}>عدم إحضار البحث</option>
+                            <option value="كثرة النوم" ${currentType === 'كثرة النوم' ? 'selected' : ''}>كثرة النوم</option>
+                            <option value="ضعف المشاركة" ${currentType === 'ضعف المشاركة' ? 'selected' : ''}>ضعف المشاركة</option>
+                        </select>
+                    </td>
+                    <td>
+                        <select id="count_select_${id}" class="count-select" ${isCounselorView ? 'disabled' : ''} onchange="updateCloudField('${id}', 'violationCount', this.value)">
+                            <!-- تُملأ القائمة المنسدلة للعدد ديناميكياً -->
                         </select>
                     </td>
                     <td>
@@ -750,11 +789,14 @@
                     </td>
                     <td class="no-print" style="display: flex; gap: 4px; justify-content: center; align-items: center; padding-top: 15px;">
                         <button class="btn-save-student" ${isCounselorView ? 'style="display:none;"' : ''} onclick="saveSingleStudent('${id}', '${data.name}')">💾 حفظ</button>
-                        <button class="btn-view-report" onclick="openSingleReport('${data.name}', 'الحالي', '${data.violation}', \`${data.notes || 'لا توجد'}\`, \`${data.reply || 'لم يتم الرد بعد'}\`)">👁️ معاينة</button>
+                        <button class="btn-view-report" onclick="openSingleReport('${data.name}', 'الحالي', '${violationSummary}', \`${data.notes || 'لا توجد'}\`, \`${data.reply || 'لم يتم الرد بعد'}\`)">👁️ معاينة</button>
                         <button class="btn-remove" ${isCounselorView ? 'style="display:none;"' : ''} onclick="deleteCloudStudent('${id}')">🗑️</button>
                     </td>
                 `;
                 tbody.appendChild(row);
+
+                // بناء خيارات قائمة العدد بعد إضافة السطر للجدول
+                renderCountDropdownOptions(id, currentType, currentCount);
             });
 
             if (isCounselorView) {
@@ -762,6 +804,30 @@
                 document.querySelectorAll('.btn-save-reply').forEach(btn => btn.style.display = 'inline-block');
             }
         });
+    }
+
+    // بناء خيارات قائمة "العدد" بالجدول بناءً على النوع المختار
+    function renderCountDropdownOptions(id, selectedType, selectedCount) {
+        const countSelect = document.getElementById(`count_select_${id}`);
+        if (!countSelect) return;
+
+        countSelect.innerHTML = '<option value="لا يوجد">-- اختر العدد --</option>';
+
+        if (countOptionsMap[selectedType]) {
+            countOptionsMap[selectedType].forEach(opt => {
+                const optionEl = document.createElement("option");
+                optionEl.value = opt.value;
+                optionEl.textContent = opt.text;
+                if (opt.value === selectedCount) optionEl.selected = true;
+                countSelect.appendChild(optionEl);
+            });
+        }
+    }
+
+    async function handleTypeChange(id, newType) {
+        renderCountDropdownOptions(id, newType, "لا يوجد");
+        await updateCloudField(id, 'violationType', newType);
+        await updateCloudField(id, 'violationCount', "لا يوجد");
     }
 
     async function updateCloudField(id, field, value) {
@@ -813,12 +879,20 @@
             }
         });
 
-        const selects = contentClone.querySelectorAll('select.violation-select');
-        const originalSelects = document.querySelectorAll('#tableBody select.violation-select');
-        selects.forEach((sel, idx) => {
-            const span = document.createElement('span');
-            span.textContent = originalSelects[idx].value;
-            sel.parentNode.replaceChild(span, sel);
+        const rows = contentClone.querySelectorAll('#tableBody tr');
+        const origRows = document.querySelectorAll('#tableBody tr');
+        rows.forEach((row, idx) => {
+            const typeSel = origRows[idx].querySelector('select.violation-select');
+            const countSel = origRows[idx].querySelector('select.count-select');
+            
+            const typeVal = typeSel ? typeSel.value : '';
+            const countVal = countSel ? countSel.value : '';
+            
+            const typeTd = row.children[2];
+            const countTd = row.children[3];
+            
+            if(typeTd) typeTd.textContent = typeVal;
+            if(countTd) countTd.textContent = countVal;
         });
 
         const previewArea = document.getElementById('previewArea');
@@ -850,12 +924,20 @@
             }
         });
 
-        const selects = element.querySelectorAll('select.violation-select');
-        const originalSelects = document.querySelectorAll('#tableBody select.violation-select');
-        selects.forEach((sel, idx) => {
-            const span = document.createElement('span');
-            span.textContent = originalSelects[idx].value;
-            sel.parentNode.replaceChild(span, sel);
+        const rows = element.querySelectorAll('#tableBody tr');
+        const origRows = document.querySelectorAll('#tableBody tr');
+        rows.forEach((row, idx) => {
+            const typeSel = origRows[idx].querySelector('select.violation-select');
+            const countSel = origRows[idx].querySelector('select.count-select');
+            
+            const typeVal = typeSel ? typeSel.value : '';
+            const countVal = countSel ? countSel.value : '';
+            
+            const typeTd = row.children[2];
+            const countTd = row.children[3];
+            
+            if(typeTd) typeTd.textContent = typeVal;
+            if(countTd) countTd.textContent = countVal;
         });
 
         const options = {
