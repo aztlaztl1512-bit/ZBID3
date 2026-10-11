@@ -28,7 +28,7 @@
         }
 
         .container {
-            max-width: 1150px;
+            max-width: 1000px;
             margin: 0 auto;
             background: #ffffff;
             padding: 30px;
@@ -67,9 +67,60 @@
             margin-bottom: 8px;
         }
 
-        select.student-select, select.violation-select {
+        .search-container {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .search-box-wrapper {
+            position: relative;
+            flex-grow: 1;
+            min-width: 250px;
+        }
+
+        input[type="text"].student-search {
             width: 100%;
-            padding: 8px 10px;
+            padding: 10px 12px;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+            font-size: 1rem;
+            outline: none;
+            box-sizing: border-box;
+        }
+
+        .search-results {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            left: 0;
+            background: white;
+            border: 1px solid #ccc;
+            border-top: none;
+            border-radius: 0 0 6px 6px;
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 1000;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            display: none;
+        }
+
+        .search-results div {
+            padding: 10px;
+            cursor: pointer;
+            border-bottom: 1px solid #eee;
+        }
+
+        .search-results div:hover {
+            background-color: #f0f0f0;
+            color: var(--maroon);
+            font-weight: bold;
+        }
+
+        select.violation-select {
+            width: 100%;
+            padding: 8px;
             border-radius: 6px;
             border: 1px solid #ccc;
             font-size: 0.85rem;
@@ -80,7 +131,7 @@
             font-family: inherit;
         }
 
-        select.violation-select:focus, select.student-select:focus {
+        select.violation-select:focus {
             border-color: var(--maroon);
             box-shadow: 0 0 5px rgba(128,0,0,0.2);
         }
@@ -128,9 +179,9 @@
 
         th, td {
             border: 1px solid var(--border);
-            padding: 8px;
+            padding: 10px;
             text-align: center;
-            font-size: 0.85rem;
+            font-size: 0.9rem;
             vertical-align: middle;
         }
 
@@ -186,7 +237,7 @@
         .btn-preview { background: #3498db; color: white; }
         .btn-pdf { background: #e74c3c; color: white; }
         .btn-print { background: #27ae60; color: white; }
-        .btn-save-student { background: #27ae60; color: white; padding: 4px 8px; font-size: 0.75rem; border-radius: 4px; cursor: pointer; border: none; margin-top: 4px; display: inline-block; }
+        .btn-save-student { background: #27ae60; color: white; padding: 5px 10px; font-size: 0.8rem; border-radius: 4px; cursor: pointer; border: none; }
         .btn-save-reply { background: #27ae60; color: white; padding: 6px 12px; font-size: 0.8rem; border-radius: 4px; cursor: pointer; border: none; display: none; margin-top: 4px; }
         .btn-view-report { background: #17a2b8; color: white; padding: 5px 8px; font-size: 0.8rem; border-radius: 4px; border: none; cursor: pointer; }
         .btn-edit-report { background: #f39c12; color: white; padding: 5px 8px; font-size: 0.8rem; border-radius: 4px; border: none; cursor: pointer; }
@@ -238,13 +289,14 @@
         </div>
     </div>
 
-    <!-- قسم القائمة المنسدلة لاختيار الطالب -->
+    <!-- قسم البحث واختيار الطالب -->
     <div class="select-section no-print" id="controlSection">
-        <label for="studentDropdown">📂 اختر اسم الطالب من القائمة أو أضفه:</label>
-        <div style="display: flex; gap: 10px;">
-            <select id="studentDropdown" class="student-select" onchange="onStudentSelectChange()">
-                <option value="">-- اختر طالباً من القائمة --</option>
-            </select>
+        <label for="searchInput">🔍 ابحث عن اسم الطالب واختاره لإضافته للقائمة:</label>
+        <div class="search-container">
+            <div class="search-box-wrapper">
+                <input type="text" id="searchInput" class="student-search" placeholder="اكتب اسم الطالب هنا للبحث..." oninput="filterStudents()" onfocus="filterStudents()">
+                <div id="searchResults" class="search-results"></div>
+            </div>
             <button class="btn btn-add" onclick="addSelectedStudent()">إضافة للقائمة</button>
         </div>
     </div>
@@ -258,22 +310,19 @@
         <div id="historyContent">جاري البحث...</div>
     </div>
 
-    <!-- جدول المخالفات المنسدلة وملاحظات المعلم -->
+    <!-- جدول الطلاب والمخالفات المنسدلة النظيفة -->
     <table id="referralTable">
         <thead>
             <tr>
-                <th style="width: 4%;">#</th>
-                <th style="width: 18%;">اسم الطالب</th>
-                <th style="width: 15%;">عدم إحضار الواجبات</th>
-                <th style="width: 14%;">عدم إحضار البحث</th>
-                <th style="width: 12%;">كثرة النوم</th>
-                <th style="width: 13%;">قلة المشاركة</th>
-                <th style="width: 18%;">ملاحظات وسلوكيات أخرى</th>
-                <th class="no-print" style="width: 16%;">الإجراءات</th>
+                <th style="width: 5%;">#</th>
+                <th style="width: 25%;">اسم الطالب</th>
+                <th style="width: 28%;">اختر المخالفة والرقم من القائمة المنسدلة</th>
+                <th style="width: 24%;">ملاحظات المعلم وسلوكياته</th>
+                <th class="no-print" style="width: 18%;">الإجراءات</th>
             </tr>
         </thead>
         <tbody id="tableBody">
-            <!-- يُضاف الطلاب هنا -->
+            <!-- يُضاف الطلاب هنا مبسطين جداً -->
         </tbody>
     </table>
 
@@ -326,7 +375,7 @@
     </div>
 </div>
 
-<!-- نافذة تعديل التقرير مع القوائم المنسدلة -->
+<!-- نافذة تعديل التقرير -->
 <div class="modal-overlay" id="editReportModal">
     <div class="modal-content" style="max-width: 500px;">
         <h3 style="color: var(--maroon); margin-top: 0; border-bottom: 2px solid var(--gold); padding-bottom: 10px;">✏️ تعديل بيانات التقرير</h3>
@@ -338,41 +387,28 @@
         </div>
 
         <div style="margin-bottom: 12px;">
-            <label style="display: block; font-weight: bold; margin-bottom: 4px;">عدم إحضار الواجبات:</label>
-            <select id="editHomework" class="violation-select">
-                <option value="لا يوجد">لا يوجد</option>
-                <option value="واجب الأول">واجب الأول</option>
-                <option value="واجب الثاني">واجب الثاني</option>
-                <option value="واجب الثالث">واجب الثالث</option>
-                <option value="واجب الرابع">واجب الرابع</option>
-                <option value="واجب الخامس">واجب الخامس</option>
-            </select>
-        </div>
-
-        <div style="margin-bottom: 12px;">
-            <label style="display: block; font-weight: bold; margin-bottom: 4px;">عدم إحضار البحث:</label>
-            <select id="editResearch" class="violation-select">
-                <option value="لا يوجد">لا يوجد</option>
-                <option value="لم يقدم البحث">لم يقدم البحث</option>
-                <option value="البحث غير مكتمل">البحث غير مكتمل</option>
-            </select>
-        </div>
-
-        <div style="margin-bottom: 12px;">
-            <label style="display: block; font-weight: bold; margin-bottom: 4px;">كثرة النوم:</label>
-            <select id="editSleep" class="violation-select">
-                <option value="لا يوجد">لا يوجد</option>
-                <option value="نوم متكرر">نوم متكرر</option>
-                <option value="نوم خفيف">نوم خفيف</option>
-            </select>
-        </div>
-
-        <div style="margin-bottom: 12px;">
-            <label style="display: block; font-weight: bold; margin-bottom: 4px;">قلة المشاركة:</label>
-            <select id="editParticipation" class="violation-select">
-                <option value="لا يوجد">لا يوجد</option>
-                <option value="مشاركة ضعيفة">مشاركة ضعيفة</option>
-                <option value="عدم مشاركة مطلقاً">عدم مشاركة مطلقاً</option>
+            <label style="display: block; font-weight: bold; margin-bottom: 4px;">المخالفة المسجلة:</label>
+            <select id="editViolation" class="violation-select">
+                <option value="لا توجد مخالفة">لا توجد مخالفة</option>
+                <optgroup label="عدم إحضار الواجبات">
+                    <option value="واجب 1">واجب 1</option>
+                    <option value="واجب 2">واجب 2</option>
+                    <option value="واجب 3">واجب 3</option>
+                    <option value="واجب 4">واجب 4</option>
+                    <option value="واجب 5">واجب 5</option>
+                </optgroup>
+                <optgroup label="عدم إحضار البحث">
+                    <option value="بحث 1 (لم يقدم البحث)">بحث 1 (لم يقدم البحث)</option>
+                    <option value="بحث 2 (البحث غير مكتمل)">بحث 2 (البحث غير مكتمل)</option>
+                </optgroup>
+                <optgroup label="كثرة النوم">
+                    <option value="نوم 1 (نوم خفيف)">نوم 1 (نوم خفيف)</option>
+                    <option value="نوم 2 (نوم متكرر)">نوم 2 (نوم متكرر)</option>
+                </optgroup>
+                <optgroup label="ضعف المشاركة">
+                    <option value="مشاركة 1 (ضعيفة)">مشاركة 1 (ضعيفة)</option>
+                    <option value="مشاركة 2 (عدم مشاركة مطلقاً)">مشاركة 2 (عدم مشاركة مطلقاً)</option>
+                </optgroup>
             </select>
         </div>
 
@@ -401,22 +437,18 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
+    let allStudents = [];
     let studentCount = 0;
+    let selectedStudentName = "";
     const urlParams = new URLSearchParams(window.location.search);
     const isCounselorView = urlParams.get('mode') === 'counselor';
 
     function loadStudentsList() {
-        const dropdown = document.getElementById("studentDropdown");
         db.collection("allowed_students").orderBy("name").get().then((snapshot) => {
-            dropdown.innerHTML = '<option value="">-- اختر طالباً من القائمة --</option>';
+            allStudents = [];
             snapshot.forEach((doc) => {
                 const data = doc.data();
-                if (data.name) {
-                    const opt = document.createElement("option");
-                    opt.value = data.name;
-                    opt.textContent = data.name;
-                    dropdown.appendChild(opt);
-                }
+                if (data.name) allStudents.push(data.name);
             });
         });
         
@@ -432,14 +464,29 @@
         }
     }
 
-    function onStudentSelectChange() {
-        const dropdown = document.getElementById("studentDropdown");
-        const studentName = dropdown.value;
-        if (studentName) {
-            fetchStudentHistory(studentName);
+    function filterStudents() {
+        const query = document.getElementById("searchInput").value.trim().toLowerCase();
+        const resultsContainer = document.getElementById("searchResults");
+        resultsContainer.innerHTML = "";
+        if (!query) { resultsContainer.style.display = "none"; return; }
+
+        const filtered = allStudents.filter(name => name.toLowerCase().includes(query));
+        if (filtered.length === 0) {
+            resultsContainer.innerHTML = '<div style="color: #888;">لا توجد نتائج مطابقة</div>';
         } else {
-            document.getElementById('studentHistorySection').style.display = 'none';
+            filtered.forEach(name => {
+                const div = document.createElement("div");
+                div.textContent = name;
+                div.onclick = function() {
+                    document.getElementById("searchInput").value = name;
+                    selectedStudentName = name;
+                    resultsContainer.style.display = "none";
+                    fetchStudentHistory(name);
+                };
+                resultsContainer.appendChild(div);
+            });
         }
+        resultsContainer.style.display = "block";
     }
 
     async function fetchStudentHistory(studentName) {
@@ -468,19 +515,13 @@
                 html += `
                     <div class="history-card" id="history_card_${docId}">
                         <div style="font-weight: bold; color: var(--maroon); margin-bottom: 5px;">📅 تاريخ التحويل: ${dateStr}</div>
-                        <div style="font-size: 0.85rem; margin-bottom: 4px;">
-                            <strong>المخالفات:</strong> 
-                            ${data.homework !== 'لا يوجد' ? '• ' + data.homework + ' ' : ''}
-                            ${data.research !== 'لا يوجد' ? '• ' + data.research + ' ' : ''}
-                            ${data.sleep !== 'لا يوجد' ? '• ' + data.sleep + ' ' : ''}
-                            ${data.participation !== 'لا يوجد' ? '• ' + data.participation + ' ' : ''}
-                        </div>
+                        <div style="font-size: 0.85rem; margin-bottom: 4px;"><strong>المخالفة:</strong> ${data.violation || 'لا توجد'}</div>
                         <div style="font-size: 0.85rem; margin-bottom: 4px;"><strong>ملاحظاتك:</strong> ${data.notes || 'لا توجد ملاحظات'}</div>
                         <div style="font-size: 0.85rem; color: #0066cc; margin-bottom: 8px;"><strong>رد المرشد الطلابي:</strong> ${data.reply || 'لم يتم الرد بعد'}</div>
                         
                         <div class="history-card-actions no-print">
-                            <button class="btn-view-report" onclick="openSingleReport('${data.name}', '${dateStr}', '${data.homework}', '${data.research}', '${data.sleep}', '${data.participation}', \`${data.notes || 'لا توجد'}\`, \`${data.reply || 'لم يتم الرد بعد'}\`)">👁️ معاينة</button>
-                            <button class="btn-edit-report" onclick="openEditReportModal('${docId}', '${data.name}', '${data.homework}', '${data.research}', '${data.sleep}', '${data.participation}', \`${data.notes || ''}\`)">✏️ تعديل</button>
+                            <button class="btn-view-report" onclick="openSingleReport('${data.name}', '${dateStr}', '${data.violation}', \`${data.notes || 'لا توجد'}\`, \`${data.reply || 'لم يتم الرد بعد'}\`)">👁️ معاينة</button>
+                            <button class="btn-edit-report" onclick="openEditReportModal('${docId}', '${data.name}', '${data.violation}', \`${data.notes || ''}\`)">✏️ تعديل</button>
                             <button class="btn-remove" onclick="deleteHistoryRecord('${docId}', '${studentName}')">🗑️ حذف</button>
                         </div>
                     </div>
@@ -493,13 +534,10 @@
         }
     }
 
-    function openEditReportModal(id, name, hw, res, sleep, part, notes) {
+    function openEditReportModal(id, name, violation, notes) {
         document.getElementById('editDocId').value = id;
         document.getElementById('editStudentName').value = name;
-        document.getElementById('editHomework').value = hw || "لا يوجد";
-        document.getElementById('editResearch').value = res || "لا يوجد";
-        document.getElementById('editSleep').value = sleep || "لا يوجد";
-        document.getElementById('editParticipation').value = part || "لا يوجد";
+        document.getElementById('editViolation').value = violation || "لا توجد مخالفة";
         document.getElementById('editNotes').value = notes;
         document.getElementById('editReportModal').style.display = 'flex';
     }
@@ -511,10 +549,7 @@
     async function saveEditedReport() {
         const id = document.getElementById('editDocId').value;
         const name = document.getElementById('editStudentName').value.trim();
-        const homework = document.getElementById('editHomework').value;
-        const research = document.getElementById('editResearch').value;
-        const sleep = document.getElementById('editSleep').value;
-        const participation = document.getElementById('editParticipation').value;
+        const violation = document.getElementById('editViolation').value;
         const notes = document.getElementById('editNotes').value.trim();
 
         if (!name) return alert("اسم الطالب مطلوب");
@@ -522,10 +557,7 @@
         try {
             await db.collection("referral_list").doc(id).update({
                 name: name,
-                homework: homework,
-                research: research,
-                sleep: sleep,
-                participation: participation,
+                violation: violation,
                 notes: notes
             });
             alert("تم حفظ التعديلات بنجاح! ✅");
@@ -536,7 +568,6 @@
         }
     }
 
-    // حفظ بيانات طالب فردي فوراً
     async function saveSingleStudent(id, studentName) {
         try {
             alert(`تم حفظ بيانات الطالب (${studentName}) بنجاح في السحابة! ✅`);
@@ -578,19 +609,13 @@
                             <span>🎓 الطالب: ${data.name}</span>
                             <span>📅 التاريخ: ${dateStr}</span>
                         </div>
-                        <div style="font-size: 0.85rem; margin-bottom: 4px;">
-                            <strong>المخالفات:</strong> 
-                            ${data.homework !== 'لا يوجد' ? '• ' + data.homework + ' ' : ''}
-                            ${data.research !== 'لا يوجد' ? '• ' + data.research + ' ' : ''}
-                            ${data.sleep !== 'لا يوجد' ? '• ' + data.sleep + ' ' : ''}
-                            ${data.participation !== 'لا يوجد' ? '• ' + data.participation + ' ' : ''}
-                        </div>
+                        <div style="font-size: 0.85rem; margin-bottom: 4px;"><strong>المخالفة:</strong> ${data.violation || 'لا توجد'}</div>
                         <div style="font-size: 0.85rem; margin-bottom: 4px;"><strong>ملاحظات المعلم:</strong> ${data.notes || 'لا توجد'}</div>
                         <div style="font-size: 0.85rem; color: #0066cc; margin-bottom: 8px;"><strong>رد المرشد:</strong> ${data.reply || 'لم يتم الرد بعد'}</div>
                         
                         <div style="display: flex; gap: 8px; justify-content: flex-end;">
-                            <button class="btn-view-report" onclick="openSingleReport('${data.name}', '${dateStr}', '${data.homework}', '${data.research}', '${data.sleep}', '${data.participation}', \`${data.notes || 'لا توجد'}\`, \`${data.reply || 'لم يتم الرد بعد'}\`)">👁️ معاينة</button>
-                            <button class="btn-edit-report" onclick="openEditReportModal('${docId}', '${data.name}', '${data.homework}', '${data.research}', '${data.sleep}', '${data.participation}', \`${data.notes || ''}\`)">✏️ تعديل</button>
+                            <button class="btn-view-report" onclick="openSingleReport('${data.name}', '${dateStr}', '${data.violation}', \`${data.notes || 'لا توجد'}\`, \`${data.reply || 'لم يتم الرد بعد'}\`)">👁️ معاينة</button>
+                            <button class="btn-edit-report" onclick="openEditReportModal('${docId}', '${data.name}', '${data.violation}', \`${data.notes || ''}\`)">✏️ تعديل</button>
                             <button class="btn-remove" onclick="deleteSavedReport('${docId}')">🗑️ حذف</button>
                         </div>
                     </div>
@@ -619,16 +644,11 @@
         }
     }
 
-    function openSingleReport(name, dateStr, hw, res, sleep, part, notes, reply) {
+    function openSingleReport(name, dateStr, violation, notes, reply) {
         const content = `
             <p><strong>اسم الطالب:</strong> ${name}</p>
             <p><strong>تاريخ التحويل:</strong> ${dateStr}</p>
-            <p><strong>المخالفات المسجلة:</strong> 
-                ${hw !== 'لا يوجد' ? hw + ' | ' : ''}
-                ${res !== 'لا يوجد' ? res + ' | ' : ''}
-                ${sleep !== 'لا يوجد' ? sleep + ' | ' : ''}
-                ${part !== 'لا يوجد' ? part : ''}
-            </p>
+            <p><strong>المخالفة المسجلة:</strong> ${violation}</p>
             <p><strong>ملاحظات المعلم:</strong> ${notes}</p>
             <hr style="border: 0; border-top: 1px solid #ddd; margin: 15px 0;">
             <p><strong>رد المرشد الطلابي:</strong> <span style="color: #0066cc; font-weight: bold;">${reply}</span></p>
@@ -653,24 +673,29 @@
         }
     }
 
+    document.addEventListener("click", function(e) {
+        if (!e.target.closest(".search-box-wrapper")) {
+            const res = document.getElementById("searchResults");
+            if(res) res.style.display = "none";
+        }
+    });
+
     async function addSelectedStudent() {
-        const dropdown = document.getElementById("studentDropdown");
-        const studentName = dropdown.value;
-        if (!studentName) return alert("يرجى اختيار طالب من القائمة أولاً");
+        const inputVal = document.getElementById("searchInput").value.trim();
+        const studentName = selectedStudentName || inputVal;
+        if (!studentName) return alert("يرجى اختيار أو كتابة اسم الطالب أولاً");
 
         const studentId = "student_" + Date.now();
         try {
             await db.collection("referral_list").doc(studentId).set({
                 name: studentName,
-                homework: "لا يوجد",
-                research: "لا يوجد",
-                sleep: "لا يوجد",
-                participation: "لا يوجد",
+                violation: "لا توجد مخالفة",
                 notes: "",
                 reply: "لم يتم الرد بعد",
                 createdAt: firebase.firestore.FieldValue.serverTimestamp()
             });
-            dropdown.value = "";
+            document.getElementById("searchInput").value = "";
+            selectedStudentName = "";
             document.getElementById("studentHistorySection").style.display = "none";
         } catch (e) {
             console.error(e);
@@ -691,40 +716,29 @@
                 const row = document.createElement("tr");
                 row.innerHTML = `
                     <td>${studentCount}</td>
-                    <td style="text-align: right; font-weight: bold;">
-                        ${data.name}
-                        <br>
-                        <button class="btn-save-student no-print" ${isCounselorView ? 'style="display:none;"' : ''} onclick="saveSingleStudent('${id}', '${data.name}')">💾 حفظ</button>
-                    </td>
+                    <td style="text-align: right; font-weight: bold;">${data.name}</td>
                     <td>
-                        <select class="violation-select" ${isCounselorView ? 'disabled' : ''} onchange="updateCloudField('${id}', 'homework', this.value)">
-                            <option value="لا يوجد" ${data.homework === 'لا يوجد' ? 'selected' : ''}>لا يوجد</option>
-                            <option value="واجب الأول" ${data.homework === 'واجب الأول' ? 'selected' : ''}>واجب الأول</option>
-                            <option value="واجب الثاني" ${data.homework === 'واجب الثاني' ? 'selected' : ''}>واجب الثاني</option>
-                            <option value="واجب الثالث" ${data.homework === 'واجب الثالث' ? 'selected' : ''}>واجب الثالث</option>
-                            <option value="واجب الرابع" ${data.homework === 'واجب الرابع' ? 'selected' : ''}>واجب الرابع</option>
-                            <option value="واجب الخامس" ${data.homework === 'واجب الخامس' ? 'selected' : ''}>واجب الخامس</option>
-                        </select>
-                    </td>
-                    <td>
-                        <select class="violation-select" ${isCounselorView ? 'disabled' : ''} onchange="updateCloudField('${id}', 'research', this.value)">
-                            <option value="لا يوجد" ${data.research === 'لا يوجد' ? 'selected' : ''}>لا يوجد</option>
-                            <option value="لم يقدم البحث" ${data.research === 'لم يقدم البحث' ? 'selected' : ''}>لم يقدم البحث</option>
-                            <option value="البحث غير مكتمل" ${data.research === 'البحث غير مكتمل' ? 'selected' : ''}>البحث غير مكتمل</option>
-                        </select>
-                    </td>
-                    <td>
-                        <select class="violation-select" ${isCounselorView ? 'disabled' : ''} onchange="updateCloudField('${id}', 'sleep', this.value)">
-                            <option value="لا يوجد" ${data.sleep === 'لا يوجد' ? 'selected' : ''}>لا يوجد</option>
-                            <option value="نوم متكرر" ${data.sleep === 'نوم متكرر' ? 'selected' : ''}>نوم متكرر</option>
-                            <option value="نوم خفيف" ${data.sleep === 'نوم خفيف' ? 'selected' : ''}>نوم خفيف</option>
-                        </select>
-                    </td>
-                    <td>
-                        <select class="violation-select" ${isCounselorView ? 'disabled' : ''} onchange="updateCloudField('${id}', 'participation', this.value)">
-                            <option value="لا يوجد" ${data.participation === 'لا يوجد' ? 'selected' : ''}>لا يوجد</option>
-                            <option value="مشاركة ضعيفة" ${data.participation === 'مشاركة ضعيفة' ? 'selected' : ''}>مشاركة ضعيفة</option>
-                            <option value="عدم مشاركة مطلقاً" ${data.participation === 'عدم مشاركة مطلقاً' ? 'selected' : ''}>عدم مشاركة مطلقاً</option>
+                        <select class="violation-select" ${isCounselorView ? 'disabled' : ''} onchange="updateCloudField('${id}', 'violation', this.value)">
+                            <option value="لا توجد مخالفة" ${data.violation === 'لا توجد مخالفة' ? 'selected' : ''}>-- اختر المخالفة --</option>
+                            <optgroup label="عدم إحضار الواجبات">
+                                <option value="واجب 1" ${data.violation === 'واجب 1' ? 'selected' : ''}>واجب 1</option>
+                                <option value="واجب 2" ${data.violation === 'واجب 2' ? 'selected' : ''}>واجب 2</option>
+                                <option value="واجب 3" ${data.violation === 'واجب 3' ? 'selected' : ''}>واجب 3</option>
+                                <option value="واجب 4" ${data.violation === 'واجب 4' ? 'selected' : ''}>واجب 4</option>
+                                <option value="واجب 5" ${data.violation === 'واجب 5' ? 'selected' : ''}>واجب 5</option>
+                            </optgroup>
+                            <optgroup label="عدم إحضار البحث">
+                                <option value="بحث 1 (لم يقدم البحث)" ${data.violation === 'بحث 1 (لم يقدم البحث)' ? 'selected' : ''}>بحث 1 (لم يقدم البحث)</option>
+                                <option value="بحث 2 (البحث غير مكتمل)" ${data.violation === 'بحث 2 (البحث غير مكتمل)' ? 'selected' : ''}>بحث 2 (البحث غير مكتمل)</option>
+                            </optgroup>
+                            <optgroup label="كثرة النوم">
+                                <option value="نوم 1 (نوم خفيف)" ${data.violation === 'نوم 1 (نوم خفيف)' ? 'selected' : ''}>نوم 1 (نوم خفيف)</option>
+                                <option value="نوم 2 (نوم متكرر)" ${data.violation === 'نوم 2 (نوم متكرر)' ? 'selected' : ''}>نوم 2 (نوم متكرر)</option>
+                            </optgroup>
+                            <optgroup label="ضعف المشاركة">
+                                <option value="مشاركة 1 (ضعيفة)" ${data.violation === 'مشاركة 1 (ضعيفة)' ? 'selected' : ''}>مشاركة 1 (ضعيفة)</option>
+                                <option value="مشاركة 2 (عدم مشاركة مطلقاً)" ${data.violation === 'مشاركة 2 (عدم مشاركة مطلقاً)' ? 'selected' : ''}>مشاركة 2 (عدم مشاركة مطلقاً)</option>
+                            </optgroup>
                         </select>
                     </td>
                     <td>
@@ -734,10 +748,10 @@
                             <button class="btn-save-reply" onclick="saveReply('${id}')">💾 حفظ رد المرشد</button>
                         </div>
                     </td>
-                    <td class="no-print">
-                        <button class="btn-view-report" onclick="openSingleReport('${data.name}', 'الحالي', '${data.homework}', '${data.research}', '${data.sleep}', '${data.participation}', \`${data.notes || 'لا توجد'}\`, \`${data.reply || 'لم يتم الرد بعد'}\`)">👁️ معاينة</button>
-                        <button class="btn-edit-report" onclick="openEditReportModal('${id}', '${data.name}', '${data.homework}', '${data.research}', '${data.sleep}', '${data.participation}', \`${data.notes || ''}\`)">✏️ تعديل</button>
-                        <button class="btn-remove" ${isCounselorView ? 'style="display:none;"' : ''} onclick="deleteCloudStudent('${id}')">🗑️ حذف</button>
+                    <td class="no-print" style="display: flex; gap: 4px; justify-content: center; align-items: center; padding-top: 15px;">
+                        <button class="btn-save-student" ${isCounselorView ? 'style="display:none;"' : ''} onclick="saveSingleStudent('${id}', '${data.name}')">💾 حفظ</button>
+                        <button class="btn-view-report" onclick="openSingleReport('${data.name}', 'الحالي', '${data.violation}', \`${data.notes || 'لا توجد'}\`, \`${data.reply || 'لم يتم الرد بعد'}\`)">👁️ معاينة</button>
+                        <button class="btn-remove" ${isCounselorView ? 'style="display:none;"' : ''} onclick="deleteCloudStudent('${id}')">🗑️</button>
                     </td>
                 `;
                 tbody.appendChild(row);
