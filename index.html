@@ -349,7 +349,6 @@
             margin-top: 4px;
         }
 
-        /* شريط القائمة المنسدلة للتحكم الموحد */
         .actions-dropdown-container {
             margin-top: 30px;
             display: flex;
@@ -678,7 +677,7 @@
 
     function executeMainAction(selectEl) {
         const val = selectEl.value;
-        selectEl.value = ""; // إعادة الضبط
+        selectEl.value = "";
 
         if (val === "save_all") saveCurrentReports();
         else if (val === "open_saved") openSavedReportsModal();
@@ -793,4 +792,443 @@
             historyContent.innerHTML = html;
         } catch (error) {
             console.error(error);
-            historyContent.innerHTML = "<p style='color: red;'>حدث خطأ أثناء جلب الأرشيف.</p
+            historyContent.innerHTML = "<p style='color: red;'>حدث خطأ أثناء جلب الأرشيف.</p>";
+        }
+    }
+
+    function openEditReportModal(id, name, notes) {
+        document.getElementById('editDocId').value = id;
+        document.getElementById('editStudentName').value = name;
+        document.getElementById('editNotes').value = notes;
+        document.getElementById('editReportModal').style.display = 'flex';
+    }
+
+    function closeEditReportModal() {
+        document.getElementById('editReportModal').style.display = 'none';
+    }
+
+    async function saveEditedReport() {
+        const id = document.getElementById('editDocId').value;
+        const name = document.getElementById('editStudentName').value.trim();
+        const notes = document.getElementById('editNotes').value.trim();
+
+        if (!name) return alert("اسم الطالب مطلوب");
+
+        try {
+            await db.collection("referral_list").doc(id).update({
+                name: name,
+                notes: notes
+            });
+            showToast("تم حفظ التعديلات بنجاح!");
+            closeEditReportModal();
+            fetchStudentHistory(name);
+        } catch (error) {
+            alert("حدث خطأ أثناء حفظ التعديل.");
+        }
+    }
+
+    async function saveSingleStudent(id, studentName) {
+        try {
+            await db.collection("referral_list").doc(id).update({
+                isArchived: true
+            });
+            showToast(`تم أرشفة وحفظ تقرير الطالب (${studentName}) بنجاح!`);
+        } catch (error) {
+            alert("حدث خطأ أثناء الحفظ.");
+        }
+    }
+
+    async function saveCurrentReports() {
+        const rows = document.querySelectorAll("#tableBody tr");
+        if (rows.length === 0) return alert("لا توجد بيانات طلاب نشطة لحفظها وأرشفتها.");
+
+        if (confirm("هل تريد أرشفة وحفظ جميع التقارير وإخفائها من هذه الشاشة؟")) {
+            const batch = db.batch();
+            const snapshot = await db.collection("referral_list").get();
+            snapshot.forEach(doc => {
+                if (!doc.data().isArchived) {
+                    batch.update(doc.ref, { isArchived: true });
+                }
+            });
+            await batch.commit();
+            showToast("تم أرشفة وحفظ كافة التقارير بنجاح!");
+        }
+    }
+
+    async function openSavedReportsModal() {
+        const container = document.getElementById("savedReportsContainer");
+        container.innerHTML = "جاري جلب كافة التقارير المحفوظة...";
+        document.getElementById("savedReportsModal").style.display = "flex";
+
+        try {
+            const snapshot = await db.collection("referral_list").orderBy("createdAt", "desc").get();
+            if (snapshot.empty) {
+                container.innerHTML = "<p style='color: #666;'>لا توجد تقارير محفوظة حالياً.</p>";
+                return;
+            }
+
+            let html = "";
+            snapshot.forEach(doc => {
+                const data = doc.data();
+                const docId = doc.id;
+                const createdTimeStr = formatTimestamp(data.createdAt);
+                const replyTimeStr = data.replyCreatedAt ? formatTimestamp(data.replyCreatedAt) : null;
+                const violationsList = (data.violations && data.violations.length > 0) ? data.violations.join(' | ') : 'لا توجد مخالفات';
+
+                html += `
+                    <div class="history-card">
+                        <div style="display: flex; justify-content: space-between; align-items: center; font-weight: bold; color: var(--maroon); margin-bottom: 8px;">
+                            <span>🎓 الطالب: ${data.name || 'طالب'}</span>
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <span class="time-badge-referral"><i class="fa-solid fa-calendar-check"></i> ${createdTimeStr}</span>
+                                <div class="no-print">
+                                    <select class="action-dropdown" onchange="handleReportAction(this, '${docId}', '${data.name}', '${createdTimeStr}', \`${violationsList}\`, \`${data.notes || 'لا توجد'}\`, \`${data.reply || 'لم يتم الرد بعد'}\`, '${replyTimeStr || ''}')">
+                                        <option value="">⚙️ الإجراءات...</option>
+                                        <option value="view">👁️ معاينة</option>
+                                        <option value="edit">✏️ تعديل</option>
+                                        <option value="delete">🗑️ حذف</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div style="font-size: 0.85rem; margin-bottom: 4px;"><strong>المخالفات المسجلة:</strong> ${violationsList}</div>
+                        <div style="font-size: 0.85rem; margin-bottom: 4px;"><strong>ملاحظات المعلم:</strong> ${data.notes || 'لا توجد'}</div>
+                        <div style="font-size: 0.85rem; color: #0284c7; margin-bottom: 4px;">
+                            <strong>رد المرشد:</strong> ${data.reply || 'لم يتم الرد بعد'}
+                            ${replyTimeStr ? `<br><span class="time-badge-reply"><i class="fa-solid fa-reply-all"></i> وقت الرد: ${replyTimeStr}</span>` : ''}
+                        </div>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+        } catch (error) {
+            console.error(error);
+            container.innerHTML = "<p style='color: red;'>حدث خطأ أثناء تحميل التقارير المحفوظة.</p>";
+        }
+    }
+
+    function closeSavedReportsModal() {
+        document.getElementById("savedReportsModal").style.display = "none";
+    }
+
+    async function deleteSavedReport(docId) {
+        if (confirm("حذف هذا التقرير المحفوظ من السحابة؟")) {
+            try {
+                await db.collection("referral_list").doc(docId).delete();
+                showToast("تم الحذف بنجاح!");
+                openSavedReportsModal();
+            } catch (error) {
+                alert("حدث خطأ أثناء الحذف.");
+            }
+        }
+    }
+
+    function openSingleReport(name, dateStr, violations, notes, reply, replyDateStr) {
+        const content = `
+            <p><strong>اسم الطالب:</strong> ${name}</p>
+            <p><strong>تاريخ ووقت الإحالة:</strong> <span class="time-badge-referral"><i class="fa-solid fa-calendar-check"></i> ${dateStr}</span></p>
+            <p><strong>المخالفات المسجلة:</strong> ${violations}</p>
+            <p><strong>ملاحظات المعلم:</strong> ${notes}</p>
+            <hr style="border: 0; border-top: 1px solid #ddd; margin: 15px 0;">
+            <p><strong>رد المرشد الطلابي:</strong> <span style="color: #0284c7; font-weight: bold;">${reply}</span> 
+            ${replyDateStr ? `<br><span class="time-badge-reply" style="margin-top: 8px;"><i class="fa-solid fa-reply-all"></i> وقت الرد: ${replyDateStr}</span>` : ''}</p>
+        `;
+        document.getElementById('singleReportContent').innerHTML = content;
+        document.getElementById('singleReportModal').style.display = 'flex';
+    }
+
+    function closeSingleReportModal() {
+        document.getElementById('singleReportModal').style.display = 'none';
+    }
+
+    async function deleteHistoryRecord(docId, studentName) {
+        if (confirm("هل أنت متأكد من حذف هذا السجل من الأرشيف؟")) {
+            try {
+                await db.collection("referral_list").doc(docId).delete();
+                showToast("تم حذف السجل بنجاح!");
+                fetchStudentHistory(studentName);
+            } catch (error) {
+                alert("حدث خطأ أثناء الحذف.");
+            }
+        }
+    }
+
+    document.addEventListener("click", function(e) {
+        if (!e.target.closest(".search-box-wrapper")) {
+            const res = document.getElementById("searchResults");
+            if(res) res.style.display = "none";
+        }
+    });
+
+    async function addSelectedStudent() {
+        const inputVal = document.getElementById("searchInput").value.trim();
+        const studentName = selectedStudentName || inputVal;
+        if (!studentName) return alert("يرجى اختيار أو كتابة اسم الطالب أولاً");
+
+        const studentId = "student_" + Date.now();
+        try {
+            await db.collection("referral_list").doc(studentId).set({
+                name: studentName,
+                violations: [],
+                notes: "",
+                reply: "لم يتم الرد بعد",
+                isArchived: false,
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            document.getElementById("searchInput").value = "";
+            selectedStudentName = "";
+            document.getElementById("studentHistorySection").style.display = "none";
+            showToast(`تم إدراج الطالب (${studentName}) للقائمة النشطة!`);
+        } catch (e) {
+            console.error(e);
+        }
+    }
+
+    function listenToCloudReferrals() {
+        db.collection("referral_list").onSnapshot(snapshot => {
+            const tbody = document.getElementById("tableBody");
+            tbody.innerHTML = "";
+            studentCount = 0;
+
+            snapshot.forEach(doc => {
+                const data = doc.data();
+                const id = doc.id;
+
+                // إظهار الطلاب حسب حالة الأرشفة ورؤية المرشد
+                if (!isCounselorView && data.isArchived === true) return;
+                if (isCounselorView && (data.reply && data.reply !== "لم يتم الرد بعد")) return;
+
+                studentCount++;
+
+                const currentViolations = data.violations || [];
+                const violationsSummaryText = currentViolations.length > 0 ? currentViolations.join(' ، ') : 'لا توجد مخالفات مسجلة';
+                const createdTimeStr = formatTimestamp(data.createdAt);
+                const replyTimeStr = data.replyCreatedAt ? formatTimestamp(data.replyCreatedAt) : null;
+                const studentDisplayName = data.name || "اسم الطالب";
+
+                const row = document.createElement("tr");
+                row.innerHTML = `
+                    <td>${studentCount}</td>
+                    <td style="text-align: right; font-weight: bold;">
+                        ${studentDisplayName}
+                        <br>
+                        <span class="time-badge-referral"><i class="fa-solid fa-calendar-check"></i> ${createdTimeStr}</span>
+                    </td>
+                    <td class="no-print">
+                        <select id="type_select_${id}" class="violation-select" ${isCounselorView ? 'disabled' : ''} onchange="onTypeSelectChange('${id}')">
+                            <option value="">-- اختر نوع المخالفة --</option>
+                            <option value="عدم إحضار الواجبات">عدم إحضار الواجبات</option>
+                            <option value="عدم إحضار البحث">عدم إحضار البحث</option>
+                            <option value="كثرة النوم">كثرة النوم</option>
+                            <option value="ضعف المشاركة">ضعف المشاركة</option>
+                        </select>
+                        
+                        <select id="count_select_${id}" class="count-select" ${isCounselorView ? 'disabled' : ''}>
+                            <option value="">-- اختر العدد --</option>
+                        </select>
+                        
+                        <button class="btn-add-violation" ${isCounselorView ? 'style="display:none;"' : ''} onclick="addViolationToStudent('${id}')"><i class="fa-solid fa-circle-plus"></i> إضافة المخالفة للقائمة</button>
+                    </td>
+                    <td>
+                        <div id="violation_tags_${id}" class="violation-tags-list"></div>
+                    </td>
+                    <td>
+                        <textarea class="notes-input" ${isCounselorView ? 'disabled' : ''} placeholder="سلوكيات وملاحظات المعلم..." onblur="updateCloudField('${id}', 'notes', this.value)">${data.notes || ''}</textarea>
+                        <div id="counselor_box_${id}" style="display:none; margin-top: 5px;">
+                            <textarea id="reply_${id}" class="counselor-reply" placeholder="اكتب رد المرشد الطلابي هنا...">${data.reply !== "لم يتم الرد بعد" ? (data.reply || '') : ''}</textarea>
+                            ${replyTimeStr ? `<div style="text-align: right;"><span class="time-badge-reply"><i class="fa-solid fa-reply-all"></i> وقت الرد: ${replyTimeStr}</span></div>` : ''}
+                            <button class="btn-save-reply" onclick="saveReply('${id}')"><i class="fa-solid fa-paper-plane"></i> حفظ رد المرشد</button>
+                        </div>
+                    </td>
+                    <td class="no-print" style="display: flex; gap: 4px; justify-content: center; align-items: center; padding-top: 15px;">
+                        <button class="btn-save-student" ${isCounselorView ? 'style="display:none;"' : ''} onclick="saveSingleStudent('${id}', '${studentDisplayName}')" title="حفظ وأرشفة الطالب"><i class="fa-solid fa-floppy-disk"></i></button>
+                        <button class="btn-view-report" onclick="openSingleReport('${studentDisplayName}', '${createdTimeStr}', \`${violationsSummaryText}\`, \`${data.notes || 'لا توجد'}\`, \`${data.reply || 'لم يتم الرد بعد'}\`, '${replyTimeStr || ''}')" title="معاينة"><i class="fa-solid fa-eye"></i></button>
+                        <button class="btn-remove" ${isCounselorView ? 'style="display:none;"' : ''} onclick="deleteCloudStudent('${id}')" title="حذف"><i class="fa-solid fa-trash"></i></button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+
+                renderStudentViolationTags(id, currentViolations);
+            });
+
+            if (isCounselorView) {
+                document.querySelectorAll('[id^="counselor_box_"]').forEach(box => box.style.display = 'block');
+                document.querySelectorAll('.btn-save-reply').forEach(btn => btn.style.display = 'inline-block');
+            }
+        });
+    }
+
+    function onTypeSelectChange(id) {
+        const typeSelect = document.getElementById(`type_select_${id}`);
+        const countSelect = document.getElementById(`count_select_${id}`);
+        const selectedType = typeSelect.value;
+
+        countSelect.innerHTML = '<option value="">-- اختر العدد --</option>';
+
+        if (countOptionsMap[selectedType]) {
+            countOptionsMap[selectedType].forEach(opt => {
+                const optionEl = document.createElement("option");
+                optionEl.value = opt.value;
+                optionEl.textContent = opt.text;
+                countSelect.appendChild(optionEl);
+            });
+        }
+    }
+
+    async function addViolationToStudent(id) {
+        const typeSelect = document.getElementById(`type_select_${id}`);
+        const countSelect = document.getElementById(`count_select_${id}`);
+
+        const typeVal = typeSelect.value;
+        const countVal = countSelect.value;
+
+        if (!typeVal || !countVal) {
+            return alert("يرجى اختيار نوع المخالفة والعدد قبل الضغط على إضافة!");
+        }
+
+        const violationString = `${typeVal}: ${countVal}`;
+
+        const docRef = db.collection("referral_list").doc(id);
+        const doc = await docRef.get();
+        if (doc.exists) {
+            const currentArray = doc.data().violations || [];
+            currentArray.push(violationString);
+            await docRef.update({ violations: currentArray });
+            typeSelect.value = "";
+            countSelect.innerHTML = '<option value="">-- اختر العدد --</option>';
+            showToast("تمت إضافة المخالفة للقائمة بنجاح!");
+        }
+    }
+
+    async function removeViolationFromStudent(id, indexToRemove) {
+        const docRef = db.collection("referral_list").doc(id);
+        const doc = await docRef.get();
+        if (doc.exists) {
+            let currentArray = doc.data().violations || [];
+            currentArray.splice(indexToRemove, 1);
+            await docRef.update({ violations: currentArray });
+            showToast("تم حذف المخالفة!");
+        }
+    }
+
+    function renderStudentViolationTags(id, violationsArray) {
+        const container = document.getElementById(`violation_tags_${id}`);
+        if (!container) return;
+
+        container.innerHTML = "";
+
+        if (!violationsArray || violationsArray.length === 0) {
+            container.innerHTML = '<span style="color: #94a3b8; font-size: 0.8rem; font-style: italic;">لا توجد مخالفات مضافة</span>';
+            return;
+        }
+
+        violationsArray.forEach((vItem, index) => {
+            const tag = document.createElement("div");
+            tag.className = "violation-tag";
+            tag.innerHTML = `
+                <span>• ${vItem}</span>
+                ${!isCounselorView ? `<button class="btn-remove-tag no-print" onclick="removeViolationFromStudent('${id}',${index})" title="حذف المخالفة"><i class="fa-solid fa-xmark"></i></button>` : ''}
+            `;
+            container.appendChild(tag);
+        });
+    }
+
+    async function updateCloudField(id, field, value) {
+        if (!isCounselorView) {
+            await db.collection("referral_list").doc(id).update({ [field]: value });
+        }
+    }
+
+    async function saveReply(id) {
+        const replyText = document.getElementById(`reply_${id}`).value;
+        if (!replyText.trim()) return alert("يرجى كتابة الرد قبل الحفظ!");
+
+        try {
+            await db.collection("referral_list").doc(id).update({ 
+                reply: replyText,
+                replyCreatedAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            showToast("تم حفظ الرد وتوقيته وإخفاء التقرير من قائمة المرشد!");
+        } catch (error) {
+            alert("حدث خطأ أثناء حفظ الرد.");
+        }
+    }
+
+    async function deleteCloudStudent(id) {
+        if(!isCounselorView && confirm("إزالة هذا الطالب من القائمة الحالية؟")) {
+            await db.collection("referral_list").doc(id).delete();
+            showToast("تم إزالة الطالب من القائمة!");
+        }
+    }
+
+    function shareCounselorLink() {
+        const currentUrl = window.location.href.split('?')[0];
+        const counselorUrl = currentUrl + "?mode=counselor";
+        navigator.clipboard.writeText(counselorUrl).then(() => {
+            showToast("تم نسخ رابط المرشد الطلابي بنجاح!");
+        });
+    }
+
+    function showPreview() {
+        const contentClone = document.getElementById('pdfContent').cloneNode(true);
+        contentClone.querySelectorAll('.no-print').forEach(el => el.remove());
+        contentClone.querySelectorAll('.btn-save-reply').forEach(el => el.remove());
+
+        const textareas = contentClone.querySelectorAll('textarea');
+        const originalTextareas = document.querySelectorAll('#tableBody textarea');
+        textareas.forEach((ta, idx) => {
+            if(!ta.classList.contains('counselor-reply')) {
+                const div = document.createElement('div');
+                div.textContent = originalTextareas[idx].value || '-';
+                div.style.textAlign = 'right';
+                div.style.padding = '4px';
+                div.style.fontSize = '0.85rem';
+                div.style.whiteSpace = 'pre-wrap';
+                ta.parentNode.replaceChild(div, ta);
+            }
+        });
+
+        const previewArea = document.getElementById('previewArea');
+        previewArea.innerHTML = '';
+        previewArea.appendChild(contentClone);
+        document.getElementById('previewModal').style.display = 'flex';
+    }
+
+    function closePreview() {
+        document.getElementById('previewModal').style.display = 'none';
+    }
+
+    function downloadPDF() {
+        const element = document.getElementById('pdfContent').cloneNode(true);
+        element.querySelectorAll('.no-print').forEach(el => el.remove());
+        element.querySelectorAll('.btn-save-reply').forEach(el => el.remove());
+
+        const textareas = element.querySelectorAll('textarea');
+        const originalTextareas = document.querySelectorAll('#tableBody textarea');
+        textareas.forEach((ta, idx) => {
+            if(!ta.classList.contains('counselor-reply')) {
+                const div = document.createElement('div');
+                div.textContent = originalTextareas[idx].value || '-';
+                div.style.textAlign = 'right';
+                div.style.padding = '4px';
+                div.style.fontSize = '0.85rem';
+                div.style.whiteSpace = 'pre-wrap';
+                ta.parentNode.replaceChild(div, ta);
+            }
+        });
+
+        const options = {
+            margin: 10,
+            filename: 'استمارة_تحويل_المرشد_الطلابي.pdf',
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: { scale: 2, useCORS: true },
+            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        };
+        html2pdf().from(element).set(options).save();
+    }
+
+    window.onload = loadStudentsList;
+</script>
+
+</body>
+</html>
