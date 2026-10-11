@@ -319,7 +319,6 @@
             border-color: #cbd5e1;
         }
 
-        /* الشارات الملونة الأنيقة للوقت والتاريخ */
         .time-badge-referral {
             display: inline-flex;
             align-items: center;
@@ -503,7 +502,7 @@
             </tr>
         </thead>
         <tbody id="tableBody">
-            <!-- يُضاف الطلاب هنا -->
+            <!-- يُضاف الطلاب النشطون هنا -->
         </tbody>
     </table>
 
@@ -514,8 +513,8 @@
 
     <!-- أزرار التحكم -->
     <div class="actions no-print">
-        <button class="btn btn-save-report" id="btnSaveReport" onclick="saveCurrentReports()"><i class="fa-solid fa-floppy-disk"></i> حفظ جميع التقارير</button>
-        <button class="btn btn-saved-list" id="btnSavedList" onclick="openSavedReportsModal()"><i class="fa-solid fa-box-archive"></i> التقارير المحفوظة</button>
+        <button class="btn btn-save-report" id="btnSaveReport" onclick="saveCurrentReports()"><i class="fa-solid fa-floppy-disk"></i> حفظ وأرشفة جميع التقارير</button>
+        <button class="btn btn-saved-list" id="btnSavedList" onclick="openSavedReportsModal()"><i class="fa-solid fa-box-archive"></i> التقارير المحفوظة والأرشيف</button>
         <button class="btn btn-share" id="btnShareLink" onclick="shareCounselorLink()"><i class="fa-solid fa-link"></i> مشاركة رابط المرشد</button>
         <button class="btn btn-preview" onclick="showPreview()"><i class="fa-solid fa-eye"></i> معاينة قبل الحفظ</button>
         <button class="btn btn-pdf" id="btnDownloadPdf" onclick="downloadPDF()"><i class="fa-solid fa-file-pdf"></i> تحميل PDF</button>
@@ -538,7 +537,7 @@
 <div class="modal-overlay" id="savedReportsModal">
     <div class="modal-content">
         <h3 style="color: var(--maroon); margin-top: 0; border-bottom: 2px solid var(--gold); padding-bottom: 10px; display: flex; justify-content: space-between; align-items: center;">
-            <span><i class="fa-solid fa-box-archive"></i> جميع التقارير المحفوظة في السحابة</span>
+            <span><i class="fa-solid fa-box-archive"></i> التقارير المحفوظة السحابية</span>
             <button class="btn btn-close" onclick="closeSavedReportsModal()">إغلاق</button>
         </h3>
         <div id="savedReportsContainer" style="margin-top: 15px;">جاري تحميل التقارير المحفوظة...</div>
@@ -778,15 +777,28 @@
     }
 
     async function saveSingleStudent(id, studentName) {
-        showToast(`تم حفظ تقرير الطالب (${studentName}) بنجاح!`);
+        try {
+            await db.collection("referral_list").doc(id).update({
+                isArchived: true
+            });
+            showToast(`تم أرشفة وحفظ تقرير الطالب (${studentName}) بنجاح!`);
+        } catch (error) {
+            alert("حدث خطأ أثناء الحفظ.");
+        }
     }
 
     async function saveCurrentReports() {
         const rows = document.querySelectorAll("#tableBody tr");
-        if (rows.length === 0) return alert("لا توجد بيانات طلاب في القائمة الحالية لحفظها.");
+        if (rows.length === 0) return alert("لا توجد بيانات طلاب نشطة لحفظها وأرشفتها.");
 
-        if (confirm("هل تريد حفظ وتثبيت جميع هذه التقارير في السحابة؟")) {
-            showToast("تم حفظ جميع التقارير بنجاح وأرشفتها!");
+        if (confirm("هل تريد أرشفة وحفظ جميع التقارير وإخفائها من هذه الشاشة؟")) {
+            const batch = db.batch();
+            const snapshot = await db.collection("referral_list").where("isArchived", "==", false).get();
+            snapshot.forEach(doc => {
+                batch.update(doc.ref, { isArchived: true });
+            });
+            await batch.commit();
+            showToast("تم أرشفة وحفظ كافة التقارير بنجاح!");
         }
     }
 
@@ -903,12 +915,13 @@
                 violations: [],
                 notes: "",
                 reply: "لم يتم الرد بعد",
+                isArchived: false,
                 createdAt: firebase.firestore.FieldValue.serverTimestamp()
             });
             document.getElementById("searchInput").value = "";
             selectedStudentName = "";
             document.getElementById("studentHistorySection").style.display = "none";
-            showToast(`تم إدراج الطالب (${studentName}) للقائمة!`);
+            showToast(`تم إدراج الطالب (${studentName}) للقائمة النشطة!`);
         } catch (e) {
             console.error(e);
         }
@@ -923,6 +936,13 @@
             snapshot.forEach(doc => {
                 const data = doc.data();
                 const id = doc.id;
+
+                // التصفية السحابية الذكية
+                // المعلم يشاهد فقط التقارير غير المؤرشفة
+                // المرشد الطلابي يشاهد التقارير التي لم يرد عليها بعد (المستجدة)
+                if (!isCounselorView && data.isArchived) return;
+                if (isCounselorView && (data.reply !== "لم يتم الرد بعد" && data.reply)) return;
+
                 studentCount++;
 
                 const currentViolations = data.violations || [];
@@ -965,7 +985,7 @@
                         </div>
                     </td>
                     <td class="no-print" style="display: flex; gap: 4px; justify-content: center; align-items: center; padding-top: 15px;">
-                        <button class="btn-save-student" ${isCounselorView ? 'style="display:none;"' : ''} onclick="saveSingleStudent('${id}', '${data.name}')" title="حفظ الطالب"><i class="fa-solid fa-floppy-disk"></i></button>
+                        <button class="btn-save-student" ${isCounselorView ? 'style="display:none;"' : ''} onclick="saveSingleStudent('${id}', '${data.name}')" title="حفظ وأرشفة الطالب"><i class="fa-solid fa-floppy-disk"></i></button>
                         <button class="btn-view-report" onclick="openSingleReport('${data.name}', '${createdTimeStr}', \`${violationsSummaryText}\`, \`${data.notes || 'لا توجد'}\`, \`${data.reply || 'لم يتم الرد بعد'}\`, '${replyTimeStr || ''}')" title="معاينة"><i class="fa-solid fa-eye"></i></button>
                         <button class="btn-remove" ${isCounselorView ? 'style="display:none;"' : ''} onclick="deleteCloudStudent('${id}')" title="حذف"><i class="fa-solid fa-trash"></i></button>
                     </td>
@@ -1065,12 +1085,14 @@
 
     async function saveReply(id) {
         const replyText = document.getElementById(`reply_${id}`).value;
+        if (!replyText.trim()) return alert("يرجى كتابة الرد قبل الحفظ!");
+
         try {
             await db.collection("referral_list").doc(id).update({ 
                 reply: replyText,
                 replyCreatedAt: firebase.firestore.FieldValue.serverTimestamp()
             });
-            showToast("تم حفظ وإرسال الرد وتوقيته إلى المعلم!");
+            showToast("تم حفظ الرد وتوقيته وإخفاء التقرير من قائمة المرشد!");
         } catch (error) {
             alert("حدث خطأ أثناء حفظ الرد.");
         }
