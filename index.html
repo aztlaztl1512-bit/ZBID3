@@ -319,6 +319,17 @@
             border-color: #cbd5e1;
         }
 
+        .timestamp-badge {
+            display: inline-block;
+            font-size: 0.75rem;
+            color: #64748b;
+            background: #f1f5f9;
+            padding: 3px 8px;
+            border-radius: 4px;
+            margin-top: 4px;
+            font-weight: 600;
+        }
+
         .actions {
             margin-top: 30px;
             display: flex;
@@ -464,7 +475,7 @@
         <thead>
             <tr>
                 <th style="width: 5%;">#</th>
-                <th style="width: 20%;">اسم الطالب</th>
+                <th style="width: 20%;">اسم الطالب وتاريخ التحويل</th>
                 <th style="width: 25%;" class="no-print">اختيار مخالفة وإضافتها</th>
                 <th style="width: 25%;">قائمة المخالفات المسجلة للطالب</th>
                 <th style="width: 18%;">ملاحظات وسلوكيات المعلم</th>
@@ -589,6 +600,27 @@
         ]
     };
 
+    function formatTimestamp(timestamp) {
+        if (!timestamp) return 'تاريخ غير محدد';
+        let date;
+        if (timestamp.toDate) {
+            date = timestamp.toDate();
+        } else if (timestamp instanceof Date) {
+            date = timestamp;
+        } else {
+            date = new Date(timestamp);
+        }
+        
+        return date.toLocaleString('ar-SA', {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: true
+        });
+    }
+
     function showToast(message) {
         const toast = document.getElementById("toast");
         document.getElementById("toastMsg").textContent = message;
@@ -663,18 +695,24 @@
             snapshot.forEach(doc => {
                 const data = doc.data();
                 const docId = doc.id;
-                const dateStr = data.createdAt ? new Date(data.createdAt.toDate()).toLocaleDateString('ar-SA') : 'تاريخ غير محدد';
+                const createdTimeStr = formatTimestamp(data.createdAt);
+                const replyTimeStr = data.replyCreatedAt ? formatTimestamp(data.replyCreatedAt) : null;
                 const violationsList = (data.violations && data.violations.length > 0) ? data.violations.join(' | ') : 'لا توجد مخالفات';
                 
                 html += `
                     <div class="history-card" id="history_card_${docId}">
-                        <div style="font-weight: bold; color: var(--maroon); margin-bottom: 5px;">📅 تاريخ التحويل: ${dateStr}</div>
+                        <div style="font-weight: bold; color: var(--maroon); margin-bottom: 5px;">
+                            <i class="fa-regular fa-clock"></i> تاريخ ووقت التحويل: <span class="timestamp-badge">${createdTimeStr}</span>
+                        </div>
                         <div style="font-size: 0.85rem; margin-bottom: 4px;"><strong>المخالفات:</strong> ${violationsList}</div>
                         <div style="font-size: 0.85rem; margin-bottom: 4px;"><strong>ملاحظاتك:</strong> ${data.notes || 'لا توجد ملاحظات'}</div>
-                        <div style="font-size: 0.85rem; color: #0284c7; margin-bottom: 8px;"><strong>رد المرشد الطلابي:</strong> ${data.reply || 'لم يتم الرد بعد'}</div>
+                        <div style="font-size: 0.85rem; color: #0284c7; margin-bottom: 8px;">
+                            <strong>رد المرشد الطلابي:</strong> ${data.reply || 'لم يتم الرد بعد'} 
+                            ${replyTimeStr ? `<span class="timestamp-badge"><i class="fa-regular fa-clock"></i> ${replyTimeStr}</span>` : ''}
+                        </div>
                         
                         <div style="display: flex; gap: 8px; justify-content: flex-end;" class="no-print">
-                            <button class="btn-view-report" onclick="openSingleReport('${data.name}', '${dateStr}', \`${violationsList}\`, \`${data.notes || 'لا توجد'}\`, \`${data.reply || 'لم يتم الرد بعد'}\`)"><i class="fa-solid fa-eye"></i> معاينة</button>
+                            <button class="btn-view-report" onclick="openSingleReport('${data.name}', '${createdTimeStr}', \`${violationsList}\`, \`${data.notes || 'لا توجد'}\`, \`${data.reply || 'لم يتم الرد بعد'}\`, '${replyTimeStr || ''}')"><i class="fa-solid fa-eye"></i> معاينة</button>
                             <button class="btn-edit-report" onclick="openEditReportModal('${docId}', '${data.name}', \`${data.notes || ''}\`)"><i class="fa-solid fa-pen"></i> تعديل</button>
                             <button class="btn-remove" onclick="deleteHistoryRecord('${docId}', '${studentName}')"><i class="fa-solid fa-trash"></i> حذف</button>
                         </div>
@@ -748,21 +786,25 @@
             snapshot.forEach(doc => {
                 const data = doc.data();
                 const docId = doc.id;
-                const dateStr = data.createdAt ? new Date(data.createdAt.toDate()).toLocaleDateString('ar-SA') : 'تاريخ غير محدد';
+                const createdTimeStr = formatTimestamp(data.createdAt);
+                const replyTimeStr = data.replyCreatedAt ? formatTimestamp(data.replyCreatedAt) : null;
                 const violationsList = (data.violations && data.violations.length > 0) ? data.violations.join(' | ') : 'لا توجد مخالفات';
 
                 html += `
                     <div class="history-card">
                         <div style="display: flex; justify-content: space-between; font-weight: bold; color: var(--maroon); margin-bottom: 5px;">
                             <span>🎓 الطالب: ${data.name}</span>
-                            <span>📅 التاريخ: ${dateStr}</span>
+                            <span class="timestamp-badge"><i class="fa-regular fa-clock"></i> ${createdTimeStr}</span>
                         </div>
                         <div style="font-size: 0.85rem; margin-bottom: 4px;"><strong>المخالفات المسجلة:</strong> ${violationsList}</div>
                         <div style="font-size: 0.85rem; margin-bottom: 4px;"><strong>ملاحظات المعلم:</strong> ${data.notes || 'لا توجد'}</div>
-                        <div style="font-size: 0.85rem; color: #0284c7; margin-bottom: 8px;"><strong>رد المرشد:</strong> ${data.reply || 'لم يتم الرد بعد'}</div>
+                        <div style="font-size: 0.85rem; color: #0284c7; margin-bottom: 8px;">
+                            <strong>رد المرشد:</strong> ${data.reply || 'لم يتم الرد بعد'}
+                            ${replyTimeStr ? `<span class="timestamp-badge"><i class="fa-regular fa-clock"></i> ${replyTimeStr}</span>` : ''}
+                        </div>
                         
                         <div style="display: flex; gap: 8px; justify-content: flex-end;">
-                            <button class="btn-view-report" onclick="openSingleReport('${data.name}', '${dateStr}', \`${violationsList}\`, \`${data.notes || 'لا توجد'}\`, \`${data.reply || 'لم يتم الرد بعد'}\`)"><i class="fa-solid fa-eye"></i> معاينة</button>
+                            <button class="btn-view-report" onclick="openSingleReport('${data.name}', '${createdTimeStr}', \`${violationsList}\`, \`${data.notes || 'لا توجد'}\`, \`${data.reply || 'لم يتم الرد بعد'}\`, '${replyTimeStr || ''}')"><i class="fa-solid fa-eye"></i> معاينة</button>
                             <button class="btn-edit-report" onclick="openEditReportModal('${docId}', '${data.name}', \`${data.notes || ''}\`)"><i class="fa-solid fa-pen"></i> تعديل</button>
                             <button class="btn-remove" onclick="deleteSavedReport('${docId}')"><i class="fa-solid fa-trash"></i> حذف</button>
                         </div>
@@ -792,14 +834,15 @@
         }
     }
 
-    function openSingleReport(name, dateStr, violations, notes, reply) {
+    function openSingleReport(name, dateStr, violations, notes, reply, replyDateStr) {
         const content = `
             <p><strong>اسم الطالب:</strong> ${name}</p>
-            <p><strong>تاريخ التحويل:</strong> ${dateStr}</p>
+            <p><strong>تاريخ ووقت التحويل:</strong> <span class="timestamp-badge"><i class="fa-regular fa-clock"></i> ${dateStr}</span></p>
             <p><strong>المخالفات المسجلة:</strong> ${violations}</p>
             <p><strong>ملاحظات المعلم:</strong> ${notes}</p>
             <hr style="border: 0; border-top: 1px solid #ddd; margin: 15px 0;">
-            <p><strong>رد المرشد الطلابي:</strong> <span style="color: #0284c7; font-weight: bold;">${reply}</span></p>
+            <p><strong>رد المرشد الطلابي:</strong> <span style="color: #0284c7; font-weight: bold;">${reply}</span> 
+            ${replyDateStr ? `<br><span class="timestamp-badge" style="margin-top: 5px;"><i class="fa-regular fa-clock"></i> وقت الرد: ${replyDateStr}</span>` : ''}</p>
         `;
         document.getElementById('singleReportContent').innerHTML = content;
         document.getElementById('singleReportModal').style.display = 'flex';
@@ -864,11 +907,17 @@
 
                 const currentViolations = data.violations || [];
                 const violationsSummaryText = currentViolations.length > 0 ? currentViolations.join(' ، ') : 'لا توجد مخالفات مسجلة';
+                const createdTimeStr = formatTimestamp(data.createdAt);
+                const replyTimeStr = data.replyCreatedAt ? formatTimestamp(data.replyCreatedAt) : null;
 
                 const row = document.createElement("tr");
                 row.innerHTML = `
                     <td>${studentCount}</td>
-                    <td style="text-align: right; font-weight: bold;">${data.name}</td>
+                    <td style="text-align: right; font-weight: bold;">
+                        ${data.name}
+                        <br>
+                        <span class="timestamp-badge"><i class="fa-regular fa-clock"></i> ${createdTimeStr}</span>
+                    </td>
                     <td class="no-print">
                         <select id="type_select_${id}" class="violation-select" ${isCounselorView ? 'disabled' : ''} onchange="onTypeSelectChange('${id}')">
                             <option value="">-- اختر نوع المخالفة --</option>
@@ -891,12 +940,13 @@
                         <textarea class="notes-input" ${isCounselorView ? 'disabled' : ''} placeholder="سلوكيات وملاحظات المعلم..." onblur="updateCloudField('${id}', 'notes', this.value)">${data.notes || ''}</textarea>
                         <div id="counselor_box_${id}" style="display:none; margin-top: 5px;">
                             <textarea id="reply_${id}" class="counselor-reply" placeholder="اكتب رد المرشد الطلابي هنا...">${data.reply !== "لم يتم الرد بعد" ? data.reply : ''}</textarea>
+                            ${replyTimeStr ? `<div style="text-align: right;"><span class="timestamp-badge"><i class="fa-regular fa-clock"></i> رد المرشد: ${replyTimeStr}</span></div>` : ''}
                             <button class="btn-save-reply" onclick="saveReply('${id}')"><i class="fa-solid fa-paper-plane"></i> حفظ رد المرشد</button>
                         </div>
                     </td>
                     <td class="no-print" style="display: flex; gap: 4px; justify-content: center; align-items: center; padding-top: 15px;">
                         <button class="btn-save-student" ${isCounselorView ? 'style="display:none;"' : ''} onclick="saveSingleStudent('${id}', '${data.name}')" title="حفظ الطالب"><i class="fa-solid fa-floppy-disk"></i></button>
-                        <button class="btn-view-report" onclick="openSingleReport('${data.name}', 'الحالي', \`${violationsSummaryText}\`, \`${data.notes || 'لا توجد'}\`, \`${data.reply || 'لم يتم الرد بعد'}\`)" title="معاينة"><i class="fa-solid fa-eye"></i></button>
+                        <button class="btn-view-report" onclick="openSingleReport('${data.name}', '${createdTimeStr}', \`${violationsSummaryText}\`, \`${data.notes || 'لا توجد'}\`, \`${data.reply || 'لم يتم الرد بعد'}\`, '${replyTimeStr || ''}')" title="معاينة"><i class="fa-solid fa-eye"></i></button>
                         <button class="btn-remove" ${isCounselorView ? 'style="display:none;"' : ''} onclick="deleteCloudStudent('${id}')" title="حذف"><i class="fa-solid fa-trash"></i></button>
                     </td>
                 `;
@@ -996,8 +1046,11 @@
     async function saveReply(id) {
         const replyText = document.getElementById(`reply_${id}`).value;
         try {
-            await db.collection("referral_list").doc(id).update({ reply: replyText });
-            showToast("تم حفظ وإرسال الرد إلى المعلم!");
+            await db.collection("referral_list").doc(id).update({ 
+                reply: replyText,
+                replyCreatedAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            showToast("تم حفظ وإرسال الرد وتوقيته إلى المعلم!");
         } catch (error) {
             alert("حدث خطأ أثناء حفظ الرد.");
         }
