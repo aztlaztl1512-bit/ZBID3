@@ -110,6 +110,30 @@
             font-weight: bold;
         }
 
+        .history-section {
+            background: #f8f9fa;
+            border: 2px solid #17a2b8;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 25px;
+            display: none;
+        }
+
+        .history-section h3 {
+            color: #17a2b8;
+            margin-top: 0;
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 8px;
+        }
+
+        .history-card {
+            background: white;
+            padding: 12px;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+            margin-bottom: 10px;
+        }
+
         table {
             width: 100%;
             border-collapse: collapse;
@@ -181,7 +205,7 @@
         .btn-preview { background: #3498db; color: white; }
         .btn-pdf { background: #e74c3c; color: white; }
         .btn-print { background: #27ae60; color: white; }
-        .btn-save-reply { background: #27ae60; color: white; padding: 4px 8px; font-size: 0.75rem; border-radius: 4px; cursor: pointer; border: none; }
+        .btn-save-reply { background: #27ae60; color: white; padding: 6px 12px; font-size: 0.8rem; border-radius: 4px; cursor: pointer; border: none; display: none; margin-top: 4px; }
         .btn-remove { background: #c0392b; color: white; padding: 4px 8px; font-size: 0.8rem; }
         .btn-close { background: #7f8c8d; color: white; }
 
@@ -208,7 +232,7 @@
         }
 
         @media print {
-            .select-section, .actions, .btn-remove, .btn-save-reply, .no-print, .modal-overlay {
+            .select-section, .history-section, .actions, .btn-remove, .btn-save-reply, .no-print, .modal-overlay {
                 display: none !important;
             }
             body { background: white; padding: 0; }
@@ -232,14 +256,20 @@
 
     <!-- قسم البحث والاختيار التفاعلي -->
     <div class="select-section no-print" id="controlSection">
-        <label for="searchInput">🔍 ابحث عن اسم الطالب لإضافته مباشرة إلى القائمة:</label>
+        <label for="searchInput">🔍 ابحث عن اسم الطالب لإضافته أو استعراض تقاريره السابقة:</label>
         <div style="display: flex; gap: 10px;">
             <div class="search-box-wrapper">
-                <input type="text" id="searchInput" class="student-search" placeholder="اكتب اسم الطالب هنا..." oninput="filterStudents()" onfocus="filterStudents()">
+                <input type="text" id="searchInput" class="student-search" placeholder="اكتب اسم الطالب للبحث..." oninput="filterStudents()" onfocus="filterStudents()">
                 <div id="searchResults" class="search-results"></div>
             </div>
-            <button class="btn btn-add" onclick="addSelectedStudent()">إضافة الطالب</button>
+            <button class="btn btn-add" onclick="addSelectedStudent()">إضافة للقائمة</button>
         </div>
+    </div>
+
+    <!-- قسم أرشيف التقارير السابقة للطالب -->
+    <div class="history-section no-print" id="studentHistorySection">
+        <h3 id="historyTitle">📂 سجل تقارير الطالب السابقة</h3>
+        <div id="historyContent">جاري البحث...</div>
     </div>
 
     <!-- جدول المخالفات وسجل الردود -->
@@ -269,10 +299,10 @@
 
     <!-- أزرار التحكم -->
     <div class="actions no-print">
-        <button class="btn btn-share" onclick="shareCounselorLink()">🔗 مشاركة رابط المرشد</button>
+        <button class="btn btn-share" id="btnShareLink" onclick="shareCounselorLink()">🔗 مشاركة رابط المرشد</button>
         <button class="btn btn-preview" onclick="showPreview()">🔍 معاينة قبل الحفظ</button>
-        <button class="btn btn-pdf" onclick="downloadPDF()">📥 تحميل كملف PDF</button>
-        <button class="btn btn-print" onclick="window.print()">🖨️ طباعة</button>
+        <button class="btn btn-pdf" id="btnDownloadPdf" onclick="downloadPDF()">📥 تحميل كملف PDF</button>
+        <button class="btn btn-print" id="btnPrintPage" onclick="window.print()">🖨️ طباعة</button>
     </div>
 </div>
 
@@ -317,11 +347,12 @@
         
         listenToCloudReferrals();
 
+        // تخصيص الواجهة حسب من يدخل (معلم أم مرشد طلابي)
         if (isCounselorView) {
             document.getElementById('controlSection').style.display = 'none';
-            document.querySelectorAll('.no-print').forEach(el => {
-                if(!el.classList.contains('actions')) el.style.display = 'none';
-            });
+            document.getElementById('btnShareLink').style.display = 'none';
+            document.getElementById('btnDownloadPdf').style.display = 'none';
+            document.getElementById('btnPrintPage').style.display = 'none';
         }
     }
 
@@ -342,11 +373,56 @@
                     document.getElementById("searchInput").value = name;
                     selectedStudentName = name;
                     resultsContainer.style.display = "none";
+                    fetchStudentHistory(name);
                 };
                 resultsContainer.appendChild(div);
             });
         }
         resultsContainer.style.display = "block";
+    }
+
+    async function fetchStudentHistory(studentName) {
+        const historySection = document.getElementById("studentHistorySection");
+        const historyTitle = document.getElementById("historyTitle");
+        const historyContent = document.getElementById("historyContent");
+
+        historyTitle.textContent = `📂 سجل تقارير الطالب السابقة: ${studentName}`;
+        historyContent.innerHTML = "جاري البحث في الأرشيف...";
+        historySection.style.display = "block";
+
+        try {
+            const snapshot = await db.collection("referral_list").where("name", "==", studentName).get();
+            
+            if (snapshot.empty) {
+                historyContent.innerHTML = "<p style='color: #666; margin: 0;'>لا توجد تقارير سابقة مسجلة لهذا الطالب في السحابة.</p>";
+                return;
+            }
+
+            let html = "";
+            snapshot.forEach(doc => {
+                const data = doc.data();
+                const dateStr = data.createdAt ? new Date(data.createdAt.toDate()).toLocaleDateString('ar-SA') : 'تاريخ غير محدد';
+                
+                html += `
+                    <div class="history-card">
+                        <div style="font-weight: bold; color: var(--maroon); margin-bottom: 5px;">📅 تاريخ التحويل: ${dateStr}</div>
+                        <div style="font-size: 0.85rem; margin-bottom: 4px;">
+                            <strong>المخالفات المسجلة:</strong> 
+                            ${data.homework ? '✔ واجب ' : ''}
+                            ${data.research ? '✔ بحث ' : ''}
+                            ${data.sleep ? '✔ نوم ' : ''}
+                            ${data.participation ? '✔ مشاركة ' : ''}
+                        </div>
+                        <div style="font-size: 0.85rem; margin-bottom: 4px;"><strong>ملاحظات المعلم:</strong> ${data.notes || 'لا توجد ملاحظات'}</div>
+                        <div style="font-size: 0.85rem; color: #0066cc;"><strong>رد المرشد:</strong> ${data.reply || 'لم يتم الرد بعد'}</div>
+                    </div>
+                `;
+            });
+            historyContent.innerHTML = html;
+        } catch (error) {
+            console.error(error);
+            historyContent.innerHTML = "<p style='color: red;'>حدث خطأ أثناء جلب الأرشيف.</p>";
+        }
     }
 
     document.addEventListener("click", function(e) {
@@ -375,6 +451,7 @@
             });
             document.getElementById("searchInput").value = "";
             selectedStudentName = "";
+            document.getElementById("studentHistorySection").style.display = "none";
         } catch (e) {
             console.error(e);
         }
@@ -401,33 +478,39 @@
                     <td><input type="checkbox" ${data.participation ? 'checked' : ''} ${isCounselorView ? 'disabled' : ''} onchange="updateCloudField('${id}', 'participation', this.checked)"></td>
                     <td><textarea class="notes-input" ${isCounselorView ? 'disabled' : ''} placeholder="ملاحظة..." onblur="updateCloudField('${id}', 'notes', this.value)">${data.notes || ''}</textarea></td>
                     <td>
-                        <textarea id="reply_${id}" class="counselor-reply" ${!isCounselorView ? 'placeholder="رد المرشد..."' : 'placeholder="اكتب ردك هنا..."'}>${data.reply || ''}</textarea>
-                        <button class="btn-save-reply" onclick="saveReply('${id}')">💾 حفظ الرد</button>
+                        <textarea id="reply_${id}" class="counselor-reply" placeholder="اكتب ردك هنا...">${data.reply || ''}</textarea>
+                        <button id="btn_save_${id}" class="btn-save-reply" onclick="saveReply('${id}')">💾 حفظ رد المرشد</button>
                     </td>
                     <td class="no-print"><button class="btn btn-remove" ${isCounselorView ? 'style="display:none;"' : ''} onclick="deleteCloudStudent('${id}')">X</button></td>
                 `;
                 tbody.appendChild(row);
             });
+
+            // إظهار زر حفظ الرد للمرشد فقط وإخفاؤه عن المعلم
+            if (isCounselorView) {
+                document.querySelectorAll('.btn-save-reply').forEach(btn => btn.style.display = 'inline-block');
+            }
         });
     }
 
     async function updateCloudField(id, field, value) {
-        await db.collection("referral_list").doc(id).update({ [field]: value });
+        if (!isCounselorView) {
+            await db.collection("referral_list").doc(id).update({ [field]: value });
+        }
     }
 
-    // دالة خاصة بحفظ رد المرشد وإرساله للسحابة فوراً
     async function saveReply(id) {
         const replyText = document.getElementById(`reply_${id}`).value;
         try {
             await db.collection("referral_list").doc(id).update({ reply: replyText });
-            alert("تم حفظ وإرسال الرد بنجاح! ✅");
+            alert("تم حفظ وإرسال الرد بنجاح إلى المعلم! ✅");
         } catch (error) {
             alert("حدث خطأ أثناء حفظ الرد.");
         }
     }
 
     async function deleteCloudStudent(id) {
-        if(confirm("حذف هذا الطالب من القائمة؟")) {
+        if(!isCounselorView && confirm("حذف هذا الطالب من القائمة؟")) {
             await db.collection("referral_list").doc(id).delete();
         }
     }
@@ -436,7 +519,7 @@
         const currentUrl = window.location.href.split('?')[0];
         const counselorUrl = currentUrl + "?mode=counselor";
         navigator.clipboard.writeText(counselorUrl).then(() => {
-            alert("تم نسخ رابط القراءة والرد الخاص بالمرشد الطلابي بنجاح! 📋\nأرسله للمرشد ليتمكن من تصفح الأسماء، كتابة الرد، والضغط على زر الحفظ لتظهر لديك فوراً.");
+            alert("تم نسخ رابط المرشد الطلابي بنجاح! 📋\nأرسله للمرشد، وعندما يفتحه سيظهر له زر (حفظ رد المرشد) فقط ليرسل لك الردود مباشرة.");
         });
     }
 
