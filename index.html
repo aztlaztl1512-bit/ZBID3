@@ -28,7 +28,7 @@
         }
 
         .container {
-            max-width: 1000px;
+            max-width: 1050px;
             margin: 0 auto;
             background: #ffffff;
             padding: 30px;
@@ -121,6 +121,7 @@
             padding: 10px;
             text-align: center;
             font-size: 0.9rem;
+            vertical-align: middle;
         }
 
         th {
@@ -139,15 +140,20 @@
             accent-color: var(--maroon);
         }
 
-        .notes-input, .counselor-reply {
-            width: 95%;
+        textarea.notes-input, textarea.counselor-reply {
+            width: 100%;
+            min-height: 55px;
             padding: 6px;
             border: 1px solid #ccc;
             border-radius: 4px;
             font-family: inherit;
+            font-size: 0.85rem;
+            resize: vertical;
+            box-sizing: border-box;
+            margin-bottom: 4px;
         }
 
-        .counselor-reply {
+        textarea.counselor-reply {
             background-color: #f4f6f7;
             color: #2c3e50;
             font-weight: bold;
@@ -175,6 +181,7 @@
         .btn-preview { background: #3498db; color: white; }
         .btn-pdf { background: #e74c3c; color: white; }
         .btn-print { background: #27ae60; color: white; }
+        .btn-save-reply { background: #27ae60; color: white; padding: 4px 8px; font-size: 0.75rem; border-radius: 4px; cursor: pointer; border: none; }
         .btn-remove { background: #c0392b; color: white; padding: 4px 8px; font-size: 0.8rem; }
         .btn-close { background: #7f8c8d; color: white; }
 
@@ -192,7 +199,7 @@
         .modal-content {
             background: white;
             border-radius: 10px;
-            max-width: 950px;
+            max-width: 1000px;
             width: 100%;
             max-height: 90vh;
             overflow-y: auto;
@@ -201,7 +208,7 @@
         }
 
         @media print {
-            .select-section, .actions, .btn-remove, .no-print, .modal-overlay {
+            .select-section, .actions, .btn-remove, .btn-save-reply, .no-print, .modal-overlay {
                 display: none !important;
             }
             body { background: white; padding: 0; }
@@ -240,14 +247,14 @@
         <thead>
             <tr>
                 <th style="width: 4%;">#</th>
-                <th style="width: 20%;">اسم الطالب</th>
-                <th style="width: 10%;">الواجب</th>
-                <th style="width: 10%;">البحث</th>
-                <th style="width: 8%;">النوم</th>
-                <th style="width: 10%;">المشاركة</th>
-                <th style="width: 14%;">ملاحظات المعلم</th>
-                <th style="width: 18%;">رد المرشد الطلابي (سحابي)</th>
-                <th class="no-print" style="width: 6%;">حذف</th>
+                <th style="width: 18%;">اسم الطالب</th>
+                <th style="width: 7%;">الواجب</th>
+                <th style="width: 7%;">البحث</th>
+                <th style="width: 6%;">النوم</th>
+                <th style="width: 7%;">المشاركة</th>
+                <th style="width: 21%;">ملاحظات المعلم</th>
+                <th style="width: 26%;">رد المرشد الطلابي (سحابي)</th>
+                <th class="no-print" style="width: 4%;">حذف</th>
             </tr>
         </thead>
         <tbody id="tableBody">
@@ -308,11 +315,9 @@
             });
         });
         
-        // استماع فوري للتغييرات السحابية للجدول والردود
         listenToCloudReferrals();
 
         if (isCounselorView) {
-            // تفعيل وضع القراءة فقط وتحويل الحقول لصلاحية المرشد
             document.getElementById('controlSection').style.display = 'none';
             document.querySelectorAll('.no-print').forEach(el => {
                 if(!el.classList.contains('actions')) el.style.display = 'none';
@@ -351,7 +356,6 @@
         }
     });
 
-    // إضافة طالب وحفظه بالسحابة
     async function addSelectedStudent() {
         const inputVal = document.getElementById("searchInput").value.trim();
         const studentName = selectedStudentName || inputVal;
@@ -376,7 +380,6 @@
         }
     }
 
-    // مزامنة حالة الجدول والردود سحابياً للطرفين (المعلم والمرشد)
     function listenToCloudReferrals() {
         db.collection("referral_list").orderBy("createdAt", "asc").onSnapshot(snapshot => {
             const tbody = document.getElementById("tableBody");
@@ -396,8 +399,11 @@
                     <td><input type="checkbox" ${data.research ? 'checked' : ''} ${isCounselorView ? 'disabled' : ''} onchange="updateCloudField('${id}', 'research', this.checked)"></td>
                     <td><input type="checkbox" ${data.sleep ? 'checked' : ''} ${isCounselorView ? 'disabled' : ''} onchange="updateCloudField('${id}', 'sleep', this.checked)"></td>
                     <td><input type="checkbox" ${data.participation ? 'checked' : ''} ${isCounselorView ? 'disabled' : ''} onchange="updateCloudField('${id}', 'participation', this.checked)"></td>
-                    <td><input type="text" class="notes-input" value="${data.notes || ''}" ${isCounselorView ? 'disabled' : ''} placeholder="ملاحظة..." onblur="updateCloudField('${id}', 'notes', this.value)"></td>
-                    <td><input type="text" class="counselor-reply" value="${data.reply || ''}" ${!isCounselorView ? 'placeholder="رد المرشد..."' : 'placeholder="اكتب ردك هنا..."'} onblur="updateCloudField('${id}', 'reply', this.value)"></td>
+                    <td><textarea class="notes-input" ${isCounselorView ? 'disabled' : ''} placeholder="ملاحظة..." onblur="updateCloudField('${id}', 'notes', this.value)">${data.notes || ''}</textarea></td>
+                    <td>
+                        <textarea id="reply_${id}" class="counselor-reply" ${!isCounselorView ? 'placeholder="رد المرشد..."' : 'placeholder="اكتب ردك هنا..."'}>${data.reply || ''}</textarea>
+                        <button class="btn-save-reply" onclick="saveReply('${id}')">💾 حفظ الرد</button>
+                    </td>
                     <td class="no-print"><button class="btn btn-remove" ${isCounselorView ? 'style="display:none;"' : ''} onclick="deleteCloudStudent('${id}')">X</button></td>
                 `;
                 tbody.appendChild(row);
@@ -409,24 +415,47 @@
         await db.collection("referral_list").doc(id).update({ [field]: value });
     }
 
+    // دالة خاصة بحفظ رد المرشد وإرساله للسحابة فوراً
+    async function saveReply(id) {
+        const replyText = document.getElementById(`reply_${id}`).value;
+        try {
+            await db.collection("referral_list").doc(id).update({ reply: replyText });
+            alert("تم حفظ وإرسال الرد بنجاح! ✅");
+        } catch (error) {
+            alert("حدث خطأ أثناء حفظ الرد.");
+        }
+    }
+
     async function deleteCloudStudent(id) {
         if(confirm("حذف هذا الطالب من القائمة؟")) {
             await db.collection("referral_list").doc(id).delete();
         }
     }
 
-    // مشاركة رابط مخصص للمرشد الطلابي
     function shareCounselorLink() {
         const currentUrl = window.location.href.split('?')[0];
         const counselorUrl = currentUrl + "?mode=counselor";
         navigator.clipboard.writeText(counselorUrl).then(() => {
-            alert("تم نسخ رابط القراءة والرد الخاص بالمرشد الطلابي بنجاح! 📋\nأرسله للمرشد ليتمكن من تصفح الأسماء وكتابة الردود مباشرة لتظهر لديك فوراً.");
+            alert("تم نسخ رابط القراءة والرد الخاص بالمرشد الطلابي بنجاح! 📋\nأرسله للمرشد ليتمكن من تصفح الأسماء، كتابة الرد، والضغط على زر الحفظ لتظهر لديك فوراً.");
         });
     }
 
     function showPreview() {
         const contentClone = document.getElementById('pdfContent').cloneNode(true);
         contentClone.querySelectorAll('.no-print').forEach(el => el.remove());
+        contentClone.querySelectorAll('.btn-save-reply').forEach(el => el.remove());
+
+        const textareas = contentClone.querySelectorAll('textarea');
+        const originalTextareas = document.querySelectorAll('#tableBody textarea');
+        textareas.forEach((ta, idx) => {
+            const div = document.createElement('div');
+            div.textContent = originalTextareas[idx].value || '-';
+            div.style.textAlign = 'right';
+            div.style.padding = '4px';
+            div.style.fontSize = '0.85rem';
+            div.style.whiteSpace = 'pre-wrap';
+            ta.parentNode.replaceChild(div, ta);
+        });
 
         const previewArea = document.getElementById('previewArea');
         previewArea.innerHTML = '';
@@ -439,7 +468,22 @@
     }
 
     function downloadPDF() {
-        const element = document.getElementById('pdfContent');
+        const element = document.getElementById('pdfContent').cloneNode(true);
+        element.querySelectorAll('.no-print').forEach(el => el.remove());
+        element.querySelectorAll('.btn-save-reply').forEach(el => el.remove());
+
+        const textareas = element.querySelectorAll('textarea');
+        const originalTextareas = document.querySelectorAll('#tableBody textarea');
+        textareas.forEach((ta, idx) => {
+            const div = document.createElement('div');
+            div.textContent = originalTextareas[idx].value || '-';
+            div.style.textAlign = 'right';
+            div.style.padding = '4px';
+            div.style.fontSize = '0.85rem';
+            div.style.whiteSpace = 'pre-wrap';
+            ta.parentNode.replaceChild(div, ta);
+        });
+
         const options = {
             margin: 10,
             filename: 'استمارة_تحويل_المرشد_الطلابي.pdf',
