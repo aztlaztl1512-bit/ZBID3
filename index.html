@@ -270,11 +270,11 @@
             background-color: #f8fafc;
         }
 
-        /* تنسيقات شارات السلوك والعدد بألوانها المميزة */
+        /* تنسيق شارة المخالفة: سطر واحد متناسق وقريب من بعضه */
         .violation-tags-list {
             display: flex;
             flex-direction: column;
-            gap: 8px;
+            gap: 6px;
             margin-top: 4px;
             text-align: right;
         }
@@ -282,29 +282,29 @@
         .violation-tag {
             background: #fffbeb;
             border: 1.5px solid #fef08a;
-            padding: 8px 12px;
-            border-radius: 10px;
-            display: flex;
+            padding: 6px 10px;
+            border-radius: 8px;
+            display: inline-flex;
             justify-content: space-between;
             align-items: center;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.02);
         }
 
         .violation-name-text {
-            color: #854d0e; /* لون السلوك بني خردلي دافئ وبارز */
+            color: #854d0e; /* لون السلوك بني خردلي دافئ */
             font-weight: 800;
-            font-size: 0.88rem;
+            font-size: 0.85rem;
         }
 
         .violation-count-text {
             color: #1d4ed8; /* لون العدد أزرق زاهٍ ومميز */
             background-color: #eff6ff;
             border: 1px solid #bfdbfe;
-            padding: 3px 10px;
-            border-radius: 8px;
+            padding: 2px 8px;
+            border-radius: 6px;
             font-weight: 800;
-            font-size: 0.82rem;
-            margin-right: 6px;
+            font-size: 0.78rem;
+            margin-right: 15px; /* مسافة بسيطة قريبة من السلوك */
         }
 
         .btn-remove-tag {
@@ -312,7 +312,7 @@
             border: none;
             color: #ef4444;
             cursor: pointer;
-            font-size: 1rem;
+            font-size: 0.9rem;
             padding: 0 4px;
         }
 
@@ -695,9 +695,9 @@
             const vName = parts[0] ? parts[0].trim() : item;
             const vCount = parts[1] ? parts[1].trim() : '';
             html += `
-                <div style="background: #fffbeb; border: 1px solid #fef08a; padding: 6px 10px; border-radius: 8px; display: inline-flex; justify-content: space-between; align-items: center; gap: 8px;">
-                    <span style="color: #854d0e; font-weight: 800; font-size: 0.88rem;">• ${vName}</span>
-                    ${vCount ? `<span style="color: #1d4ed8; background-color: #eff6ff; border: 1px solid #bfdbfe; padding: 2px 8px; border-radius: 6px; font-weight: 800; font-size: 0.8rem;">${vCount}</span>` : ''}
+                <div class="violation-tag">
+                    <span class="violation-name-text">• ${vName}</span>
+                    ${vCount ? `<span class="violation-count-text">${vCount}</span>` : ''}
                 </div>
             `;
         });
@@ -1176,7 +1176,7 @@
             const tag = document.createElement("div");
             tag.className = "violation-tag";
             tag.innerHTML = `
-                <div style="display: flex; align-items: center; gap: 6px;">
+                <div style="display: flex; align-items: center;">
                     <span class="violation-name-text">• ${violationName}</span>
                     ${violationCount ? `<span class="violation-count-text">${violationCount}</span>` : ''}
                 </div>
