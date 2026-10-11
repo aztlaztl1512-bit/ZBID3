@@ -270,7 +270,7 @@
             background-color: #f8fafc;
         }
 
-        /* تنسيق شارة المخالفة: سطر واحد متناسق وقريب من بعضه */
+        /* تنسيق شارات المخالفات المدمجة والقريبة بدون تباعد */
         .violation-tags-list {
             display: flex;
             flex-direction: column;
@@ -279,21 +279,22 @@
             text-align: right;
         }
 
-        .violation-tag {
+        .violation-tag-inline {
             background: #fffbeb;
             border: 1.5px solid #fef08a;
-            padding: 6px 10px;
+            padding: 6px 12px;
             border-radius: 8px;
             display: inline-flex;
-            justify-content: space-between;
             align-items: center;
+            gap: 12px; /* مسافة بسيطة ومحددة قدر كلمات معدودة */
+            width: fit-content;
             box-shadow: 0 1px 3px rgba(0,0,0,0.02);
         }
 
         .violation-name-text {
             color: #854d0e; /* لون السلوك بني خردلي دافئ */
             font-weight: 800;
-            font-size: 0.85rem;
+            font-size: 0.88rem;
         }
 
         .violation-count-text {
@@ -303,8 +304,7 @@
             padding: 2px 8px;
             border-radius: 6px;
             font-weight: 800;
-            font-size: 0.78rem;
-            margin-right: 15px; /* مسافة بسيطة قريبة من السلوك */
+            font-size: 0.8rem;
         }
 
         .btn-remove-tag {
@@ -314,6 +314,7 @@
             cursor: pointer;
             font-size: 0.9rem;
             padding: 0 4px;
+            margin-right: 6px;
         }
 
         textarea.notes-input, textarea.counselor-reply {
@@ -684,18 +685,19 @@
         });
     }
 
+    // بناء شارات متقاربة ومدمجة للأرشيف والمحفوظات والمرشد
     function generateFormattedViolationsHTML(violationsArray) {
         if (!violationsArray || violationsArray.length === 0) {
             return '<span style="color: #94a3b8; font-size: 0.8rem; font-style: italic;">لا توجد مخالفات مسجلة</span>';
         }
 
-        let html = '<div style="display: flex; flex-direction: column; gap: 6px;">';
+        let html = '<div style="display: flex; flex-direction: column; gap: 6px; align-items: flex-start; margin-top: 4px;">';
         violationsArray.forEach(item => {
             const parts = item.split(':');
             const vName = parts[0] ? parts[0].trim() : item;
             const vCount = parts[1] ? parts[1].trim() : '';
             html += `
-                <div class="violation-tag">
+                <div class="violation-tag-inline">
                     <span class="violation-name-text">• ${vName}</span>
                     ${vCount ? `<span class="violation-count-text">${vCount}</span>` : ''}
                 </div>
@@ -1174,12 +1176,10 @@
             const violationCount = parts[1] ? parts[1].trim() : '';
 
             const tag = document.createElement("div");
-            tag.className = "violation-tag";
+            tag.className = "violation-tag-inline";
             tag.innerHTML = `
-                <div style="display: flex; align-items: center;">
-                    <span class="violation-name-text">• ${violationName}</span>
-                    ${violationCount ? `<span class="violation-count-text">${violationCount}</span>` : ''}
-                </div>
+                <span class="violation-name-text">• ${violationName}</span>
+                ${violationCount ? `<span class="violation-count-text">${violationCount}</span>` : ''}
                 ${!isCounselorView ? `<button class="btn-remove-tag no-print" onclick="removeViolationFromStudent('${id}',${index})" title="حذف المخالفة"><i class="fa-solid fa-xmark"></i></button>` : ''}
             `;
             container.appendChild(tag);
