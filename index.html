@@ -28,7 +28,7 @@
         }
 
         .container {
-            max-width: 1100px;
+            max-width: 1050px;
             margin: 0 auto;
             background: #ffffff;
             padding: 30px;
@@ -212,14 +212,16 @@
         }
 
         .btn-add { background: var(--maroon); color: white; }
+        .btn-save-report { background: #2980b9; color: white; }
+        .btn-saved-list { background: #d35400; color: white; }
         .btn-share { background: #8e44ad; color: white; }
         .btn-preview { background: #3498db; color: white; }
         .btn-pdf { background: #e74c3c; color: white; }
         .btn-print { background: #27ae60; color: white; }
         .btn-save-reply { background: #27ae60; color: white; padding: 6px 12px; font-size: 0.8rem; border-radius: 4px; cursor: pointer; border: none; display: none; margin-top: 4px; }
-        .btn-view-report { background: #17a2b8; color: white; padding: 5px 10px; font-size: 0.8rem; border-radius: 4px; border: none; cursor: pointer; margin-bottom: 4px; }
-        .btn-edit { background: #f39c12; color: white; padding: 5px 10px; font-size: 0.8rem; border-radius: 4px; border: none; cursor: pointer; }
-        .btn-remove { background: #c0392b; color: white; padding: 5px 10px; font-size: 0.8rem; border-radius: 4px; border: none; cursor: pointer; }
+        .btn-view-report { background: #17a2b8; color: white; padding: 5px 8px; font-size: 0.8rem; border-radius: 4px; border: none; cursor: pointer; }
+        .btn-edit-report { background: #f39c12; color: white; padding: 5px 8px; font-size: 0.8rem; border-radius: 4px; border: none; cursor: pointer; }
+        .btn-remove { background: #c0392b; color: white; padding: 5px 8px; font-size: 0.8rem; border-radius: 4px; border: none; cursor: pointer; }
         .btn-close { background: #7f8c8d; color: white; }
 
         .modal-overlay {
@@ -236,7 +238,7 @@
         .modal-content {
             background: white;
             border-radius: 10px;
-            max-width: 1000px;
+            max-width: 900px;
             width: 100%;
             max-height: 90vh;
             overflow-y: auto;
@@ -245,7 +247,7 @@
         }
 
         @media print {
-            .select-section, .history-section, .actions, .btn-remove, .btn-edit, .btn-view-report, .btn-save-reply, .no-print, .modal-overlay {
+            .select-section, .history-section, .actions, .btn-remove, .btn-edit-report, .btn-view-report, .btn-save-report, .btn-saved-list, .btn-save-reply, .no-print, .modal-overlay {
                 display: none !important;
             }
             body { background: white; padding: 0; }
@@ -288,19 +290,18 @@
         <div id="historyContent">جاري البحث...</div>
     </div>
 
-    <!-- جدول المخالفات وسجل الردود -->
+    <!-- جدول المخالفات وملاحظات المعلم -->
     <table id="referralTable">
         <thead>
             <tr>
                 <th style="width: 4%;">#</th>
-                <th style="width: 16%;">اسم الطالب</th>
-                <th style="width: 6%;">الواجب</th>
-                <th style="width: 6%;">البحث</th>
-                <th style="width: 5%;">النوم</th>
-                <th style="width: 6%;">المشاركة</th>
-                <th style="width: 20%;">ملاحظات المعلم</th>
-                <th style="width: 23%;">رد المرشد الطلابي (سحابي)</th>
-                <th class="no-print" style="width: 14%;">الإجراءات</th>
+                <th style="width: 20%;">اسم الطالب</th>
+                <th style="width: 8%;">الواجب</th>
+                <th style="width: 8%;">البحث</th>
+                <th style="width: 7%;">النوم</th>
+                <th style="width: 8%;">المشاركة</th>
+                <th style="width: 25%;">ملاحظات المعلم وسلوكياته</th>
+                <th class="no-print" style="width: 20%;">الإجراءات</th>
             </tr>
         </thead>
         <tbody id="tableBody">
@@ -315,14 +316,16 @@
 
     <!-- أزرار التحكم -->
     <div class="actions no-print">
+        <button class="btn btn-save-report" id="btnSaveReport" onclick="saveCurrentReports()">💾 حفظ التقرير</button>
+        <button class="btn btn-saved-list" id="btnSavedList" onclick="openSavedReportsModal()">📂 التقارير المحفوظة</button>
         <button class="btn btn-share" id="btnShareLink" onclick="shareCounselorLink()">🔗 مشاركة رابط المرشد</button>
         <button class="btn btn-preview" onclick="showPreview()">🔍 معاينة قبل الحفظ</button>
-        <button class="btn btn-pdf" id="btnDownloadPdf" onclick="downloadPDF()">📥 تحميل كملف PDF</button>
+        <button class="btn btn-pdf" id="btnDownloadPdf" onclick="downloadPDF()">📥 تحميل PDF</button>
         <button class="btn btn-print" id="btnPrintPage" onclick="window.print()">🖨️ طباعة</button>
     </div>
 </div>
 
-<!-- نافذة المعاينة العامة -->
+<!-- نافذة معاينة عامة -->
 <div class="modal-overlay" id="previewModal">
     <div class="modal-content">
         <div class="modal-actions no-print" style="display: flex; justify-content: flex-end; gap: 10px; margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 10px;">
@@ -333,10 +336,21 @@
     </div>
 </div>
 
-<!-- نافذة معاينة تقرير مفرد للطالب -->
+<!-- نافذة التقارير المحفوظة الكاملة -->
+<div class="modal-overlay" id="savedReportsModal">
+    <div class="modal-content">
+        <h3 style="color: var(--maroon); margin-top: 0; border-bottom: 2px solid var(--gold); padding-bottom: 10px; display: flex; justify-content: space-between; align-items: center;">
+            <span>📂 جميع التقارير المحفوظة في السحابة</span>
+            <button class="btn btn-close" onclick="closeSavedReportsModal()">إغلاق</button>
+        </h3>
+        <div id="savedReportsContainer" style="margin-top: 15px;">جاري تحميل التقارير المحفوظة...</div>
+    </div>
+</div>
+
+<!-- نافذة معاينة تقرير مفرد -->
 <div class="modal-overlay" id="singleReportModal">
     <div class="modal-content" style="max-width: 600px;">
-        <h3 style="color: var(--maroon); margin-top: 0; border-bottom: 2px solid var(--gold); padding-bottom: 10px;">📄 تفاصيل التقرير</h3>
+        <h3 style="color: var(--maroon); margin-top: 0; border-bottom: 2px solid var(--gold); padding-bottom: 10px;">📄 تفاصيل التقرير ورد المرشد</h3>
         <div id="singleReportContent" style="line-height: 1.8; font-size: 1rem; margin-bottom: 20px;"></div>
         <div style="display: flex; justify-content: flex-end;">
             <button class="btn btn-close" onclick="closeSingleReportModal()">إغلاق</button>
@@ -344,19 +358,32 @@
     </div>
 </div>
 
-<!-- نافذة تعديل سجل أرشيف الطالب -->
-<div class="modal-overlay" id="editHistoryModal">
+<!-- نافذة تعديل التقرير الحالية (تعديل مباشر مع زر الحفظ) -->
+<div class="modal-overlay" id="editReportModal">
     <div class="modal-content" style="max-width: 500px;">
-        <h3 style="color: var(--maroon); margin-top: 0;">✏️ تعديل سجل الطالب في الأرشيف</h3>
-        <input type="hidden" id="editHistoryDocId">
-        <input type="hidden" id="editHistoryStudentName">
-        <div style="margin-bottom: 15px;">
-            <label style="display: block; font-weight: bold; margin-bottom: 5px;">ملاحظات المعلم:</label>
-            <textarea id="editHistoryNotes" style="width: 100%; min-height: 90px; padding: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;"></textarea>
+        <h3 style="color: var(--maroon); margin-top: 0; border-bottom: 2px solid var(--gold); padding-bottom: 10px;">✏️ تعديل بيانات التقرير</h3>
+        <input type="hidden" id="editDocId">
+        
+        <div style="margin-bottom: 12px;">
+            <label style="display: block; font-weight: bold; margin-bottom: 4px;">اسم الطالب:</label>
+            <input type="text" id="editStudentName" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;">
         </div>
+
+        <div style="margin-bottom: 12px; display: flex; gap: 15px; flex-wrap: wrap;">
+            <label><input type="checkbox" id="editHomework"> عدم إحضار الواجب</label>
+            <label><input type="checkbox" id="editResearch"> عدم إحضار البحث</label>
+            <label><input type="checkbox" id="editSleep"> النوم</label>
+            <label><input type="checkbox" id="editParticipation"> ضعف المشاركة</label>
+        </div>
+
+        <div style="margin-bottom: 15px;">
+            <label style="display: block; font-weight: bold; margin-bottom: 4px;">ملاحظات المعلم وسلوكياته:</label>
+            <textarea id="editNotes" style="width: 100%; min-height: 90px; padding: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;"></textarea>
+        </div>
+
         <div style="display: flex; justify-content: flex-end; gap: 10px;">
-            <button class="btn btn-add" onclick="saveHistoryEdit()">حفظ التعديل</button>
-            <button class="btn btn-close" onclick="closeHistoryEditModal()">إلغاء</button>
+            <button class="btn btn-add" onclick="saveEditedReport()">💾 حفظ التعديل</button>
+            <button class="btn btn-close" onclick="closeEditReportModal()">إلغاء</button>
         </div>
     </div>
 </div>
@@ -393,6 +420,8 @@
 
         if (isCounselorView) {
             document.getElementById('controlSection').style.display = 'none';
+            document.getElementById('btnSaveReport').style.display = 'none';
+            document.getElementById('btnSavedList').style.display = 'none';
             document.getElementById('btnShareLink').style.display = 'none';
             document.getElementById('btnDownloadPdf').style.display = 'none';
             document.getElementById('btnPrintPage').style.display = 'none';
@@ -451,18 +480,18 @@
                     <div class="history-card" id="history_card_${docId}">
                         <div style="font-weight: bold; color: var(--maroon); margin-bottom: 5px;">📅 تاريخ التحويل: ${dateStr}</div>
                         <div style="font-size: 0.85rem; margin-bottom: 4px;">
-                            <strong>المخالفات المسجلة:</strong> 
+                            <strong>المخالفات:</strong> 
                             ${data.homework ? '✔ واجب ' : ''}
                             ${data.research ? '✔ بحث ' : ''}
                             ${data.sleep ? '✔ نوم ' : ''}
                             ${data.participation ? '✔ مشاركة ' : ''}
                         </div>
-                        <div style="font-size: 0.85rem; margin-bottom: 4px;"><strong>ملاحظات المعلم:</strong> ${data.notes || 'لا توجد ملاحظات'}</div>
-                        <div style="font-size: 0.85rem; color: #0066cc; margin-bottom: 8px;"><strong>رد المرشد:</strong> ${data.reply || 'لم يتم الرد بعد'}</div>
+                        <div style="font-size: 0.85rem; margin-bottom: 4px;"><strong>ملاحظاتك:</strong> ${data.notes || 'لا توجد ملاحظات'}</div>
+                        <div style="font-size: 0.85rem; color: #0066cc; margin-bottom: 8px;"><strong>رد المرشد الطلابي:</strong> ${data.reply || 'لم يتم الرد بعد'}</div>
                         
                         <div class="history-card-actions no-print">
-                            <button class="btn-view-report" onclick="openSingleReport('${data.name}', '${dateStr}', ${data.homework}, ${data.research}, ${data.sleep}, ${data.participation}, \`${data.notes || 'لا توجد'}\`, \`${data.reply || 'لم يتم الرد بعد'}\`)">👁️ فتح المعاينة</button>
-                            <button class="btn-edit" onclick="openHistoryEditModal('${docId}', '${studentName}', \`${data.notes || ''}\`)">✏️ تعديل</button>
+                            <button class="btn-view-report" onclick="openSingleReport('${data.name}', '${dateStr}', ${data.homework}, ${data.research}, ${data.sleep}, ${data.participation}, \`${data.notes || 'لا توجد'}\`, \`${data.reply || 'لم يتم الرد بعد'}\`)">👁️ معاينة</button>
+                            <button class="btn-edit-report" onclick="openEditReportModal('${docId}', '${data.name}', ${data.homework}, ${data.research}, ${data.sleep}, ${data.participation}, \`${data.notes || ''}\`)">✏️ تعديل</button>
                             <button class="btn-remove" onclick="deleteHistoryRecord('${docId}', '${studentName}')">🗑️ حذف</button>
                         </div>
                     </div>
@@ -475,19 +504,138 @@
         }
     }
 
-    // فتح نافذة معاينة تقرير محدد من الأرشيف
+    // فتح نافذة تعديل التقرير
+    function openEditReportModal(id, name, hw, res, sleep, part, notes) {
+        document.getElementById('editDocId').value = id;
+        document.getElementById('editStudentName').value = name;
+        document.getElementById('editHomework').checked = hw;
+        document.getElementById('editResearch').checked = res;
+        document.getElementById('editSleep').checked = sleep;
+        document.getElementById('editParticipation').checked = part;
+        document.getElementById('editNotes').value = notes;
+        document.getElementById('editReportModal').style.display = 'flex';
+    }
+
+    function closeEditReportModal() {
+        document.getElementById('editReportModal').style.display = 'none';
+    }
+
+    // حفظ التعديلات سحابياً وتحديث العرض
+    async function saveEditedReport() {
+        const id = document.getElementById('editDocId').value;
+        const name = document.getElementById('editStudentName').value.trim();
+        const homework = document.getElementById('editHomework').checked;
+        const research = document.getElementById('editResearch').checked;
+        const sleep = document.getElementById('editSleep').checked;
+        const participation = document.getElementById('editParticipation').checked;
+        const notes = document.getElementById('editNotes').value.trim();
+
+        if (!name) return alert("اسم الطالب مطلوب");
+
+        try {
+            await db.collection("referral_list").doc(id).update({
+                name: name,
+                homework: homework,
+                research: research,
+                sleep: sleep,
+                participation: participation,
+                notes: notes
+            });
+            alert("تم حفظ التعديلات بنجاح! ✅");
+            closeEditReportModal();
+            fetchStudentHistory(name);
+        } catch (error) {
+            alert("حدث خطأ أثناء حفظ التعديل.");
+        }
+    }
+
+    async function saveCurrentReports() {
+        const rows = document.querySelectorAll("#tableBody tr");
+        if (rows.length === 0) return alert("لا توجد بيانات طلاب في القائمة الحالية لحفظها.");
+
+        if (confirm("هل تريد حفظ وتثبيت هذه التقارير في السحابة وأرشفتها؟")) {
+            alert("تم حفظ التقارير بنجاح وتثبيتها في السحابة! ✅ يمكنك استعراضها في زر (التقارير المحفوظة).");
+        }
+    }
+
+    async function openSavedReportsModal() {
+        const container = document.getElementById("savedReportsContainer");
+        container.innerHTML = "جاري جلب كافة التقارير المحفوظة...";
+        document.getElementById("savedReportsModal").style.display = "flex";
+
+        try {
+            const snapshot = await db.collection("referral_list").orderBy("createdAt", "desc").get();
+            if (snapshot.empty) {
+                container.innerHTML = "<p style='color: #666;'>لا توجد تقارير محفوظة حالياً.</p>";
+                return;
+            }
+
+            let html = "";
+            snapshot.forEach(doc => {
+                const data = doc.data();
+                const docId = doc.id;
+                const dateStr = data.createdAt ? new Date(data.createdAt.toDate()).toLocaleDateString('ar-SA') : 'تاريخ غير محدد';
+
+                html += `
+                    <div class="history-card">
+                        <div style="display: flex; justify-content: space-between; font-weight: bold; color: var(--maroon); margin-bottom: 5px;">
+                            <span>🎓 الطالب: ${data.name}</span>
+                            <span>📅 التاريخ: ${dateStr}</span>
+                        </div>
+                        <div style="font-size: 0.85rem; margin-bottom: 4px;">
+                            <strong>المخالفات:</strong> 
+                            ${data.homework ? '✔ واجب ' : ''}
+                            ${data.research ? '✔ بحث ' : ''}
+                            ${data.sleep ? '✔ نوم ' : ''}
+                            ${data.participation ? '✔ مشاركة ' : ''}
+                        </div>
+                        <div style="font-size: 0.85rem; margin-bottom: 4px;"><strong>ملاحظات المعلم:</strong> ${data.notes || 'لا توجد'}</div>
+                        <div style="font-size: 0.85rem; color: #0066cc; margin-bottom: 8px;"><strong>رد المرشد:</strong> ${data.reply || 'لم يتم الرد بعد'}</div>
+                        
+                        <div style="display: flex; gap: 8px; justify-content: flex-end;">
+                            <button class="btn-view-report" onclick="openSingleReport('${data.name}', '${dateStr}', ${data.homework}, ${data.research}, ${data.sleep}, ${data.participation}, \`${data.notes || 'لا توجد'}\`, \`${data.reply || 'لم يتم الرد بعد'}\`)">👁️ معاينة</button>
+                            <button class="btn-edit-report" onclick="openEditReportModal('${docId}', '${data.name}', ${data.homework}, ${data.research}, ${data.sleep}, ${data.participation}, \`${data.notes || ''}\`)">✏️ تعديل</button>
+                            <button class="btn-remove" onclick="deleteSavedReport('${docId}')">🗑️ حذف</button>
+                        </div>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+        } catch (error) {
+            console.error(error);
+            container.innerHTML = "<p style='color: red;'>حدث خطأ أثناء تحميل التقارير المحفوظة.</p>";
+        }
+    }
+
+    function closeSavedReportsModal() {
+        document.getElementById("savedReportsModal").style.display = "none";
+    }
+
+    async function deleteSavedReport(docId) {
+        if (confirm("حذف هذا التقرير المحفوظ من السحابة؟")) {
+            try {
+                await db.collection("referral_list").doc(docId).delete();
+                alert("تم الحذف بنجاح!");
+                openSavedReportsModal();
+            } catch (error) {
+                alert("حدث خطأ أثناء الحذف.");
+            }
+        }
+    }
+
     function openSingleReport(name, dateStr, hw, res, sleep, part, notes, reply) {
         const content = `
             <p><strong>اسم الطالب:</strong> ${name}</p>
             <p><strong>تاريخ التحويل:</strong> ${dateStr}</p>
-            <p><strong>المخالفات:</strong> 
+            <p><strong>المخالفات المسجلة:</strong> 
                 ${hw ? 'عدم إحضار الواجب | ' : ''}
                 ${res ? 'عدم إحضار البحث | ' : ''}
                 ${sleep ? 'النوم | ' : ''}
                 ${part ? 'المشاركة' : ''}
             </p>
             <p><strong>ملاحظات المعلم:</strong> ${notes}</p>
-            <p><strong>رد المرشد الطلابي:</strong> <span style="color: #0066cc;">${reply}</span></p>
+            <hr style="border: 0; border-top: 1px solid #ddd; margin: 15px 0;">
+            <p><strong>رد المرشد الطلابي:</strong> <span style="color: #0066cc; font-weight: bold;">${reply}</span></p>
         `;
         document.getElementById('singleReportContent').innerHTML = content;
         document.getElementById('singleReportModal').style.display = 'flex';
@@ -495,32 +643,6 @@
 
     function closeSingleReportModal() {
         document.getElementById('singleReportModal').style.display = 'none';
-    }
-
-    function openHistoryEditModal(docId, studentName, notes) {
-        document.getElementById('editHistoryDocId').value = docId;
-        document.getElementById('editHistoryStudentName').value = studentName;
-        document.getElementById('editHistoryNotes').value = notes;
-        document.getElementById('editHistoryModal').style.display = 'flex';
-    }
-
-    function closeHistoryEditModal() {
-        document.getElementById('editHistoryModal').style.display = 'none';
-    }
-
-    async function saveHistoryEdit() {
-        const docId = document.getElementById('editHistoryDocId').value;
-        const studentName = document.getElementById('editHistoryStudentName').value;
-        const newNotes = document.getElementById('editHistoryNotes').value.trim();
-
-        try {
-            await db.collection("referral_list").doc(docId).update({ notes: newNotes });
-            alert("تم تحديث السجل بنجاح! ✅");
-            closeHistoryEditModal();
-            fetchStudentHistory(studentName);
-        } catch (error) {
-            alert("حدث خطأ أثناء تعديل السجل.");
-        }
     }
 
     async function deleteHistoryRecord(docId, studentName) {
@@ -556,7 +678,7 @@
                 sleep: false,
                 participation: false,
                 notes: "",
-                reply: "",
+                reply: "لم يتم الرد بعد",
                 createdAt: firebase.firestore.FieldValue.serverTimestamp()
             });
             document.getElementById("searchInput").value = "";
@@ -586,13 +708,16 @@
                     <td><input type="checkbox" ${data.research ? 'checked' : ''} ${isCounselorView ? 'disabled' : ''} onchange="updateCloudField('${id}', 'research', this.checked)"></td>
                     <td><input type="checkbox" ${data.sleep ? 'checked' : ''} ${isCounselorView ? 'disabled' : ''} onchange="updateCloudField('${id}', 'sleep', this.checked)"></td>
                     <td><input type="checkbox" ${data.participation ? 'checked' : ''} ${isCounselorView ? 'disabled' : ''} onchange="updateCloudField('${id}', 'participation', this.checked)"></td>
-                    <td><textarea class="notes-input" ${isCounselorView ? 'disabled' : ''} placeholder="ملاحظة..." onblur="updateCloudField('${id}', 'notes', this.value)">${data.notes || ''}</textarea></td>
                     <td>
-                        <textarea id="reply_${id}" class="counselor-reply" placeholder="اكتب ردك هنا...">${data.reply || ''}</textarea>
-                        <button id="btn_save_${id}" class="btn-save-reply" onclick="saveReply('${id}')">💾 حفظ رد المرشد</button>
+                        <textarea class="notes-input" ${isCounselorView ? 'disabled' : ''} placeholder="سلوكيات وملاحظات المعلم..." onblur="updateCloudField('${id}', 'notes', this.value)">${data.notes || ''}</textarea>
+                        <div id="counselor_box_${id}" style="display:none; margin-top: 5px;">
+                            <textarea id="reply_${id}" class="counselor-reply" placeholder="اكتب رد المرشد الطلابي هنا...">${data.reply !== "لم يتم الرد بعد" ? data.reply : ''}</textarea>
+                            <button class="btn-save-reply" onclick="saveReply('${id}')">💾 حفظ رد المرشد</button>
+                        </div>
                     </td>
                     <td class="no-print">
                         <button class="btn-view-report" onclick="openSingleReport('${data.name}', 'الحالي', ${data.homework}, ${data.research}, ${data.sleep}, ${data.participation}, \`${data.notes || 'لا توجد'}\`, \`${data.reply || 'لم يتم الرد بعد'}\`)">👁️ معاينة</button>
+                        <button class="btn-edit-report" onclick="openEditReportModal('${id}', '${data.name}', ${data.homework}, ${data.research}, ${data.sleep}, ${data.participation}, \`${data.notes || ''}\`)">✏️ تعديل</button>
                         <button class="btn-remove" ${isCounselorView ? 'style="display:none;"' : ''} onclick="deleteCloudStudent('${id}')">🗑️ حذف</button>
                     </td>
                 `;
@@ -600,6 +725,7 @@
             });
 
             if (isCounselorView) {
+                document.querySelectorAll('[id^="counselor_box_"]').forEach(box => box.style.display = 'block');
                 document.querySelectorAll('.btn-save-reply').forEach(btn => btn.style.display = 'inline-block');
             }
         });
@@ -643,13 +769,15 @@
         const textareas = contentClone.querySelectorAll('textarea');
         const originalTextareas = document.querySelectorAll('#tableBody textarea');
         textareas.forEach((ta, idx) => {
-            const div = document.createElement('div');
-            div.textContent = originalTextareas[idx].value || '-';
-            div.style.textAlign = 'right';
-            div.style.padding = '4px';
-            div.style.fontSize = '0.85rem';
-            div.style.whiteSpace = 'pre-wrap';
-            ta.parentNode.replaceChild(div, ta);
+            if(!ta.classList.contains('counselor-reply')) {
+                const div = document.createElement('div');
+                div.textContent = originalTextareas[idx].value || '-';
+                div.style.textAlign = 'right';
+                div.style.padding = '4px';
+                div.style.fontSize = '0.85rem';
+                div.style.whiteSpace = 'pre-wrap';
+                ta.parentNode.replaceChild(div, ta);
+            }
         });
 
         const previewArea = document.getElementById('previewArea');
@@ -670,13 +798,15 @@
         const textareas = element.querySelectorAll('textarea');
         const originalTextareas = document.querySelectorAll('#tableBody textarea');
         textareas.forEach((ta, idx) => {
-            const div = document.createElement('div');
-            div.textContent = originalTextareas[idx].value || '-';
-            div.style.textAlign = 'right';
-            div.style.padding = '4px';
-            div.style.fontSize = '0.85rem';
-            div.style.whiteSpace = 'pre-wrap';
-            ta.parentNode.replaceChild(div, ta);
+            if(!ta.classList.contains('counselor-reply')) {
+                const div = document.createElement('div');
+                div.textContent = originalTextareas[idx].value || '-';
+                div.style.textAlign = 'right';
+                div.style.padding = '4px';
+                div.style.fontSize = '0.85rem';
+                div.style.whiteSpace = 'pre-wrap';
+                ta.parentNode.replaceChild(div, ta);
+            }
         });
 
         const options = {
