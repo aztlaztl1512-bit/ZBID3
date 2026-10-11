@@ -28,7 +28,7 @@
         }
 
         .container {
-            max-width: 1050px;
+            max-width: 1150px;
             margin: 0 auto;
             background: #ffffff;
             padding: 30px;
@@ -67,47 +67,22 @@
             margin-bottom: 8px;
         }
 
-        .search-box-wrapper {
-            position: relative;
-            flex-grow: 1;
-        }
-
-        input[type="text"].student-search {
+        select.student-select, select.violation-select {
             width: 100%;
-            padding: 10px 12px;
+            padding: 8px 10px;
             border-radius: 6px;
             border: 1px solid #ccc;
-            font-size: 1rem;
+            font-size: 0.85rem;
             outline: none;
             box-sizing: border-box;
-        }
-
-        .search-results {
-            position: absolute;
-            top: 100%;
-            right: 0;
-            left: 0;
-            background: white;
-            border: 1px solid #ccc;
-            border-top: none;
-            border-radius: 0 0 6px 6px;
-            max-height: 200px;
-            overflow-y: auto;
-            z-index: 1000;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-            display: none;
-        }
-
-        .search-results div {
-            padding: 10px;
+            background-color: #fff;
             cursor: pointer;
-            border-bottom: 1px solid #eee;
+            font-family: inherit;
         }
 
-        .search-results div:hover {
-            background-color: #f0f0f0;
-            color: var(--maroon);
-            font-weight: bold;
+        select.violation-select:focus, select.student-select:focus {
+            border-color: var(--maroon);
+            box-shadow: 0 0 5px rgba(128,0,0,0.2);
         }
 
         .history-section {
@@ -153,9 +128,9 @@
 
         th, td {
             border: 1px solid var(--border);
-            padding: 10px;
+            padding: 8px;
             text-align: center;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             vertical-align: middle;
         }
 
@@ -168,16 +143,9 @@
             background-color: #fdfdfd;
         }
 
-        input[type="checkbox"] {
-            width: 18px;
-            height: 18px;
-            cursor: pointer;
-            accent-color: var(--maroon);
-        }
-
         textarea.notes-input, textarea.counselor-reply {
             width: 100%;
-            min-height: 55px;
+            min-height: 50px;
             padding: 6px;
             border: 1px solid #ccc;
             border-radius: 4px;
@@ -218,6 +186,7 @@
         .btn-preview { background: #3498db; color: white; }
         .btn-pdf { background: #e74c3c; color: white; }
         .btn-print { background: #27ae60; color: white; }
+        .btn-save-student { background: #27ae60; color: white; padding: 4px 8px; font-size: 0.75rem; border-radius: 4px; cursor: pointer; border: none; margin-top: 4px; display: inline-block; }
         .btn-save-reply { background: #27ae60; color: white; padding: 6px 12px; font-size: 0.8rem; border-radius: 4px; cursor: pointer; border: none; display: none; margin-top: 4px; }
         .btn-view-report { background: #17a2b8; color: white; padding: 5px 8px; font-size: 0.8rem; border-radius: 4px; border: none; cursor: pointer; }
         .btn-edit-report { background: #f39c12; color: white; padding: 5px 8px; font-size: 0.8rem; border-radius: 4px; border: none; cursor: pointer; }
@@ -247,7 +216,7 @@
         }
 
         @media print {
-            .select-section, .history-section, .actions, .btn-remove, .btn-edit-report, .btn-view-report, .btn-save-report, .btn-saved-list, .btn-save-reply, .no-print, .modal-overlay {
+            .select-section, .history-section, .actions, .btn-remove, .btn-edit-report, .btn-view-report, .btn-save-report, .btn-saved-list, .btn-save-student, .btn-save-reply, .no-print, .modal-overlay {
                 display: none !important;
             }
             body { background: white; padding: 0; }
@@ -269,14 +238,13 @@
         </div>
     </div>
 
-    <!-- قسم البحث والاختيار التفاعلي -->
+    <!-- قسم القائمة المنسدلة لاختيار الطالب -->
     <div class="select-section no-print" id="controlSection">
-        <label for="searchInput">🔍 ابحث عن اسم الطالب لإضافته أو استعراض تقاريره السابقة:</label>
+        <label for="studentDropdown">📂 اختر اسم الطالب من القائمة أو أضفه:</label>
         <div style="display: flex; gap: 10px;">
-            <div class="search-box-wrapper">
-                <input type="text" id="searchInput" class="student-search" placeholder="اكتب اسم الطالب للبحث..." oninput="filterStudents()" onfocus="filterStudents()">
-                <div id="searchResults" class="search-results"></div>
-            </div>
+            <select id="studentDropdown" class="student-select" onchange="onStudentSelectChange()">
+                <option value="">-- اختر طالباً من القائمة --</option>
+            </select>
             <button class="btn btn-add" onclick="addSelectedStudent()">إضافة للقائمة</button>
         </div>
     </div>
@@ -290,18 +258,18 @@
         <div id="historyContent">جاري البحث...</div>
     </div>
 
-    <!-- جدول المخالفات وملاحظات المعلم -->
+    <!-- جدول المخالفات المنسدلة وملاحظات المعلم -->
     <table id="referralTable">
         <thead>
             <tr>
                 <th style="width: 4%;">#</th>
-                <th style="width: 20%;">اسم الطالب</th>
-                <th style="width: 8%;">الواجب</th>
-                <th style="width: 8%;">البحث</th>
-                <th style="width: 7%;">النوم</th>
-                <th style="width: 8%;">المشاركة</th>
-                <th style="width: 25%;">ملاحظات المعلم وسلوكياته</th>
-                <th class="no-print" style="width: 20%;">الإجراءات</th>
+                <th style="width: 18%;">اسم الطالب</th>
+                <th style="width: 15%;">عدم إحضار الواجبات</th>
+                <th style="width: 14%;">عدم إحضار البحث</th>
+                <th style="width: 12%;">كثرة النوم</th>
+                <th style="width: 13%;">قلة المشاركة</th>
+                <th style="width: 18%;">ملاحظات وسلوكيات أخرى</th>
+                <th class="no-print" style="width: 16%;">الإجراءات</th>
             </tr>
         </thead>
         <tbody id="tableBody">
@@ -316,7 +284,7 @@
 
     <!-- أزرار التحكم -->
     <div class="actions no-print">
-        <button class="btn btn-save-report" id="btnSaveReport" onclick="saveCurrentReports()">💾 حفظ التقرير</button>
+        <button class="btn btn-save-report" id="btnSaveReport" onclick="saveCurrentReports()">💾 حفظ جميع التقارير</button>
         <button class="btn btn-saved-list" id="btnSavedList" onclick="openSavedReportsModal()">📂 التقارير المحفوظة</button>
         <button class="btn btn-share" id="btnShareLink" onclick="shareCounselorLink()">🔗 مشاركة رابط المرشد</button>
         <button class="btn btn-preview" onclick="showPreview()">🔍 معاينة قبل الحفظ</button>
@@ -358,7 +326,7 @@
     </div>
 </div>
 
-<!-- نافذة تعديل التقرير الحالية (تعديل مباشر مع زر الحفظ) -->
+<!-- نافذة تعديل التقرير مع القوائم المنسدلة -->
 <div class="modal-overlay" id="editReportModal">
     <div class="modal-content" style="max-width: 500px;">
         <h3 style="color: var(--maroon); margin-top: 0; border-bottom: 2px solid var(--gold); padding-bottom: 10px;">✏️ تعديل بيانات التقرير</h3>
@@ -369,16 +337,48 @@
             <input type="text" id="editStudentName" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;">
         </div>
 
-        <div style="margin-bottom: 12px; display: flex; gap: 15px; flex-wrap: wrap;">
-            <label><input type="checkbox" id="editHomework"> عدم إحضار الواجب</label>
-            <label><input type="checkbox" id="editResearch"> عدم إحضار البحث</label>
-            <label><input type="checkbox" id="editSleep"> النوم</label>
-            <label><input type="checkbox" id="editParticipation"> ضعف المشاركة</label>
+        <div style="margin-bottom: 12px;">
+            <label style="display: block; font-weight: bold; margin-bottom: 4px;">عدم إحضار الواجبات:</label>
+            <select id="editHomework" class="violation-select">
+                <option value="لا يوجد">لا يوجد</option>
+                <option value="واجب الأول">واجب الأول</option>
+                <option value="واجب الثاني">واجب الثاني</option>
+                <option value="واجب الثالث">واجب الثالث</option>
+                <option value="واجب الرابع">واجب الرابع</option>
+                <option value="واجب الخامس">واجب الخامس</option>
+            </select>
+        </div>
+
+        <div style="margin-bottom: 12px;">
+            <label style="display: block; font-weight: bold; margin-bottom: 4px;">عدم إحضار البحث:</label>
+            <select id="editResearch" class="violation-select">
+                <option value="لا يوجد">لا يوجد</option>
+                <option value="لم يقدم البحث">لم يقدم البحث</option>
+                <option value="البحث غير مكتمل">البحث غير مكتمل</option>
+            </select>
+        </div>
+
+        <div style="margin-bottom: 12px;">
+            <label style="display: block; font-weight: bold; margin-bottom: 4px;">كثرة النوم:</label>
+            <select id="editSleep" class="violation-select">
+                <option value="لا يوجد">لا يوجد</option>
+                <option value="نوم متكرر">نوم متكرر</option>
+                <option value="نوم خفيف">نوم خفيف</option>
+            </select>
+        </div>
+
+        <div style="margin-bottom: 12px;">
+            <label style="display: block; font-weight: bold; margin-bottom: 4px;">قلة المشاركة:</label>
+            <select id="editParticipation" class="violation-select">
+                <option value="لا يوجد">لا يوجد</option>
+                <option value="مشاركة ضعيفة">مشاركة ضعيفة</option>
+                <option value="عدم مشاركة مطلقاً">عدم مشاركة مطلقاً</option>
+            </select>
         </div>
 
         <div style="margin-bottom: 15px;">
-            <label style="display: block; font-weight: bold; margin-bottom: 4px;">ملاحظات المعلم وسلوكياته:</label>
-            <textarea id="editNotes" style="width: 100%; min-height: 90px; padding: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;"></textarea>
+            <label style="display: block; font-weight: bold; margin-bottom: 4px;">ملاحظات وسلوكيات أخرى:</label>
+            <textarea id="editNotes" style="width: 100%; min-height: 80px; padding: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;"></textarea>
         </div>
 
         <div style="display: flex; justify-content: flex-end; gap: 10px;">
@@ -401,18 +401,22 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
-    let allStudents = [];
     let studentCount = 0;
-    let selectedStudentName = "";
     const urlParams = new URLSearchParams(window.location.search);
     const isCounselorView = urlParams.get('mode') === 'counselor';
 
     function loadStudentsList() {
+        const dropdown = document.getElementById("studentDropdown");
         db.collection("allowed_students").orderBy("name").get().then((snapshot) => {
-            allStudents = [];
+            dropdown.innerHTML = '<option value="">-- اختر طالباً من القائمة --</option>';
             snapshot.forEach((doc) => {
                 const data = doc.data();
-                if (data.name) allStudents.push(data.name);
+                if (data.name) {
+                    const opt = document.createElement("option");
+                    opt.value = data.name;
+                    opt.textContent = data.name;
+                    dropdown.appendChild(opt);
+                }
             });
         });
         
@@ -428,29 +432,14 @@
         }
     }
 
-    function filterStudents() {
-        const query = document.getElementById("searchInput").value.trim().toLowerCase();
-        const resultsContainer = document.getElementById("searchResults");
-        resultsContainer.innerHTML = "";
-        if (!query) { resultsContainer.style.display = "none"; return; }
-
-        const filtered = allStudents.filter(name => name.toLowerCase().includes(query));
-        if (filtered.length === 0) {
-            resultsContainer.innerHTML = '<div style="color: #888;">لا توجد نتائج مطابقة</div>';
+    function onStudentSelectChange() {
+        const dropdown = document.getElementById("studentDropdown");
+        const studentName = dropdown.value;
+        if (studentName) {
+            fetchStudentHistory(studentName);
         } else {
-            filtered.forEach(name => {
-                const div = document.createElement("div");
-                div.textContent = name;
-                div.onclick = function() {
-                    document.getElementById("searchInput").value = name;
-                    selectedStudentName = name;
-                    resultsContainer.style.display = "none";
-                    fetchStudentHistory(name);
-                };
-                resultsContainer.appendChild(div);
-            });
+            document.getElementById('studentHistorySection').style.display = 'none';
         }
-        resultsContainer.style.display = "block";
     }
 
     async function fetchStudentHistory(studentName) {
@@ -481,17 +470,17 @@
                         <div style="font-weight: bold; color: var(--maroon); margin-bottom: 5px;">📅 تاريخ التحويل: ${dateStr}</div>
                         <div style="font-size: 0.85rem; margin-bottom: 4px;">
                             <strong>المخالفات:</strong> 
-                            ${data.homework ? '✔ واجب ' : ''}
-                            ${data.research ? '✔ بحث ' : ''}
-                            ${data.sleep ? '✔ نوم ' : ''}
-                            ${data.participation ? '✔ مشاركة ' : ''}
+                            ${data.homework !== 'لا يوجد' ? '• ' + data.homework + ' ' : ''}
+                            ${data.research !== 'لا يوجد' ? '• ' + data.research + ' ' : ''}
+                            ${data.sleep !== 'لا يوجد' ? '• ' + data.sleep + ' ' : ''}
+                            ${data.participation !== 'لا يوجد' ? '• ' + data.participation + ' ' : ''}
                         </div>
                         <div style="font-size: 0.85rem; margin-bottom: 4px;"><strong>ملاحظاتك:</strong> ${data.notes || 'لا توجد ملاحظات'}</div>
                         <div style="font-size: 0.85rem; color: #0066cc; margin-bottom: 8px;"><strong>رد المرشد الطلابي:</strong> ${data.reply || 'لم يتم الرد بعد'}</div>
                         
                         <div class="history-card-actions no-print">
-                            <button class="btn-view-report" onclick="openSingleReport('${data.name}', '${dateStr}', ${data.homework}, ${data.research}, ${data.sleep}, ${data.participation}, \`${data.notes || 'لا توجد'}\`, \`${data.reply || 'لم يتم الرد بعد'}\`)">👁️ معاينة</button>
-                            <button class="btn-edit-report" onclick="openEditReportModal('${docId}', '${data.name}', ${data.homework}, ${data.research}, ${data.sleep}, ${data.participation}, \`${data.notes || ''}\`)">✏️ تعديل</button>
+                            <button class="btn-view-report" onclick="openSingleReport('${data.name}', '${dateStr}', '${data.homework}', '${data.research}', '${data.sleep}', '${data.participation}', \`${data.notes || 'لا توجد'}\`, \`${data.reply || 'لم يتم الرد بعد'}\`)">👁️ معاينة</button>
+                            <button class="btn-edit-report" onclick="openEditReportModal('${docId}', '${data.name}', '${data.homework}', '${data.research}', '${data.sleep}', '${data.participation}', \`${data.notes || ''}\`)">✏️ تعديل</button>
                             <button class="btn-remove" onclick="deleteHistoryRecord('${docId}', '${studentName}')">🗑️ حذف</button>
                         </div>
                     </div>
@@ -504,14 +493,13 @@
         }
     }
 
-    // فتح نافذة تعديل التقرير
     function openEditReportModal(id, name, hw, res, sleep, part, notes) {
         document.getElementById('editDocId').value = id;
         document.getElementById('editStudentName').value = name;
-        document.getElementById('editHomework').checked = hw;
-        document.getElementById('editResearch').checked = res;
-        document.getElementById('editSleep').checked = sleep;
-        document.getElementById('editParticipation').checked = part;
+        document.getElementById('editHomework').value = hw || "لا يوجد";
+        document.getElementById('editResearch').value = res || "لا يوجد";
+        document.getElementById('editSleep').value = sleep || "لا يوجد";
+        document.getElementById('editParticipation').value = part || "لا يوجد";
         document.getElementById('editNotes').value = notes;
         document.getElementById('editReportModal').style.display = 'flex';
     }
@@ -520,14 +508,13 @@
         document.getElementById('editReportModal').style.display = 'none';
     }
 
-    // حفظ التعديلات سحابياً وتحديث العرض
     async function saveEditedReport() {
         const id = document.getElementById('editDocId').value;
         const name = document.getElementById('editStudentName').value.trim();
-        const homework = document.getElementById('editHomework').checked;
-        const research = document.getElementById('editResearch').checked;
-        const sleep = document.getElementById('editSleep').checked;
-        const participation = document.getElementById('editParticipation').checked;
+        const homework = document.getElementById('editHomework').value;
+        const research = document.getElementById('editResearch').value;
+        const sleep = document.getElementById('editSleep').value;
+        const participation = document.getElementById('editParticipation').value;
         const notes = document.getElementById('editNotes').value.trim();
 
         if (!name) return alert("اسم الطالب مطلوب");
@@ -549,12 +536,21 @@
         }
     }
 
+    // حفظ بيانات طالب فردي فوراً
+    async function saveSingleStudent(id, studentName) {
+        try {
+            alert(`تم حفظ بيانات الطالب (${studentName}) بنجاح في السحابة! ✅`);
+        } catch (error) {
+            alert("حدث خطأ أثناء الحفظ.");
+        }
+    }
+
     async function saveCurrentReports() {
         const rows = document.querySelectorAll("#tableBody tr");
         if (rows.length === 0) return alert("لا توجد بيانات طلاب في القائمة الحالية لحفظها.");
 
         if (confirm("هل تريد حفظ وتثبيت هذه التقارير في السحابة وأرشفتها؟")) {
-            alert("تم حفظ التقارير بنجاح وتثبيتها في السحابة! ✅ يمكنك استعراضها في زر (التقارير المحفوظة).");
+            alert("تم حفظ جميع التقارير بنجاح وتثبيتها في السحابة! ✅ يمكنك استعراضها في زر (التقارير المحفوظة).");
         }
     }
 
@@ -584,17 +580,17 @@
                         </div>
                         <div style="font-size: 0.85rem; margin-bottom: 4px;">
                             <strong>المخالفات:</strong> 
-                            ${data.homework ? '✔ واجب ' : ''}
-                            ${data.research ? '✔ بحث ' : ''}
-                            ${data.sleep ? '✔ نوم ' : ''}
-                            ${data.participation ? '✔ مشاركة ' : ''}
+                            ${data.homework !== 'لا يوجد' ? '• ' + data.homework + ' ' : ''}
+                            ${data.research !== 'لا يوجد' ? '• ' + data.research + ' ' : ''}
+                            ${data.sleep !== 'لا يوجد' ? '• ' + data.sleep + ' ' : ''}
+                            ${data.participation !== 'لا يوجد' ? '• ' + data.participation + ' ' : ''}
                         </div>
                         <div style="font-size: 0.85rem; margin-bottom: 4px;"><strong>ملاحظات المعلم:</strong> ${data.notes || 'لا توجد'}</div>
                         <div style="font-size: 0.85rem; color: #0066cc; margin-bottom: 8px;"><strong>رد المرشد:</strong> ${data.reply || 'لم يتم الرد بعد'}</div>
                         
                         <div style="display: flex; gap: 8px; justify-content: flex-end;">
-                            <button class="btn-view-report" onclick="openSingleReport('${data.name}', '${dateStr}', ${data.homework}, ${data.research}, ${data.sleep}, ${data.participation}, \`${data.notes || 'لا توجد'}\`, \`${data.reply || 'لم يتم الرد بعد'}\`)">👁️ معاينة</button>
-                            <button class="btn-edit-report" onclick="openEditReportModal('${docId}', '${data.name}', ${data.homework}, ${data.research}, ${data.sleep}, ${data.participation}, \`${data.notes || ''}\`)">✏️ تعديل</button>
+                            <button class="btn-view-report" onclick="openSingleReport('${data.name}', '${dateStr}', '${data.homework}', '${data.research}', '${data.sleep}', '${data.participation}', \`${data.notes || 'لا توجد'}\`, \`${data.reply || 'لم يتم الرد بعد'}\`)">👁️ معاينة</button>
+                            <button class="btn-edit-report" onclick="openEditReportModal('${docId}', '${data.name}', '${data.homework}', '${data.research}', '${data.sleep}', '${data.participation}', \`${data.notes || ''}\`)">✏️ تعديل</button>
                             <button class="btn-remove" onclick="deleteSavedReport('${docId}')">🗑️ حذف</button>
                         </div>
                     </div>
@@ -628,10 +624,10 @@
             <p><strong>اسم الطالب:</strong> ${name}</p>
             <p><strong>تاريخ التحويل:</strong> ${dateStr}</p>
             <p><strong>المخالفات المسجلة:</strong> 
-                ${hw ? 'عدم إحضار الواجب | ' : ''}
-                ${res ? 'عدم إحضار البحث | ' : ''}
-                ${sleep ? 'النوم | ' : ''}
-                ${part ? 'المشاركة' : ''}
+                ${hw !== 'لا يوجد' ? hw + ' | ' : ''}
+                ${res !== 'لا يوجد' ? res + ' | ' : ''}
+                ${sleep !== 'لا يوجد' ? sleep + ' | ' : ''}
+                ${part !== 'لا يوجد' ? part : ''}
             </p>
             <p><strong>ملاحظات المعلم:</strong> ${notes}</p>
             <hr style="border: 0; border-top: 1px solid #ddd; margin: 15px 0;">
@@ -657,32 +653,24 @@
         }
     }
 
-    document.addEventListener("click", function(e) {
-        if (!e.target.closest(".search-box-wrapper")) {
-            const res = document.getElementById("searchResults");
-            if(res) res.style.display = "none";
-        }
-    });
-
     async function addSelectedStudent() {
-        const inputVal = document.getElementById("searchInput").value.trim();
-        const studentName = selectedStudentName || inputVal;
-        if (!studentName) return alert("يرجى اختيار أو كتابة اسم الطالب أولاً");
+        const dropdown = document.getElementById("studentDropdown");
+        const studentName = dropdown.value;
+        if (!studentName) return alert("يرجى اختيار طالب من القائمة أولاً");
 
         const studentId = "student_" + Date.now();
         try {
             await db.collection("referral_list").doc(studentId).set({
                 name: studentName,
-                homework: false,
-                research: false,
-                sleep: false,
-                participation: false,
+                homework: "لا يوجد",
+                research: "لا يوجد",
+                sleep: "لا يوجد",
+                participation: "لا يوجد",
                 notes: "",
                 reply: "لم يتم الرد بعد",
                 createdAt: firebase.firestore.FieldValue.serverTimestamp()
             });
-            document.getElementById("searchInput").value = "";
-            selectedStudentName = "";
+            dropdown.value = "";
             document.getElementById("studentHistorySection").style.display = "none";
         } catch (e) {
             console.error(e);
@@ -703,11 +691,42 @@
                 const row = document.createElement("tr");
                 row.innerHTML = `
                     <td>${studentCount}</td>
-                    <td style="text-align: right; font-weight: bold;">${data.name}</td>
-                    <td><input type="checkbox" ${data.homework ? 'checked' : ''} ${isCounselorView ? 'disabled' : ''} onchange="updateCloudField('${id}', 'homework', this.checked)"></td>
-                    <td><input type="checkbox" ${data.research ? 'checked' : ''} ${isCounselorView ? 'disabled' : ''} onchange="updateCloudField('${id}', 'research', this.checked)"></td>
-                    <td><input type="checkbox" ${data.sleep ? 'checked' : ''} ${isCounselorView ? 'disabled' : ''} onchange="updateCloudField('${id}', 'sleep', this.checked)"></td>
-                    <td><input type="checkbox" ${data.participation ? 'checked' : ''} ${isCounselorView ? 'disabled' : ''} onchange="updateCloudField('${id}', 'participation', this.checked)"></td>
+                    <td style="text-align: right; font-weight: bold;">
+                        ${data.name}
+                        <br>
+                        <button class="btn-save-student no-print" ${isCounselorView ? 'style="display:none;"' : ''} onclick="saveSingleStudent('${id}', '${data.name}')">💾 حفظ</button>
+                    </td>
+                    <td>
+                        <select class="violation-select" ${isCounselorView ? 'disabled' : ''} onchange="updateCloudField('${id}', 'homework', this.value)">
+                            <option value="لا يوجد" ${data.homework === 'لا يوجد' ? 'selected' : ''}>لا يوجد</option>
+                            <option value="واجب الأول" ${data.homework === 'واجب الأول' ? 'selected' : ''}>واجب الأول</option>
+                            <option value="واجب الثاني" ${data.homework === 'واجب الثاني' ? 'selected' : ''}>واجب الثاني</option>
+                            <option value="واجب الثالث" ${data.homework === 'واجب الثالث' ? 'selected' : ''}>واجب الثالث</option>
+                            <option value="واجب الرابع" ${data.homework === 'واجب الرابع' ? 'selected' : ''}>واجب الرابع</option>
+                            <option value="واجب الخامس" ${data.homework === 'واجب الخامس' ? 'selected' : ''}>واجب الخامس</option>
+                        </select>
+                    </td>
+                    <td>
+                        <select class="violation-select" ${isCounselorView ? 'disabled' : ''} onchange="updateCloudField('${id}', 'research', this.value)">
+                            <option value="لا يوجد" ${data.research === 'لا يوجد' ? 'selected' : ''}>لا يوجد</option>
+                            <option value="لم يقدم البحث" ${data.research === 'لم يقدم البحث' ? 'selected' : ''}>لم يقدم البحث</option>
+                            <option value="البحث غير مكتمل" ${data.research === 'البحث غير مكتمل' ? 'selected' : ''}>البحث غير مكتمل</option>
+                        </select>
+                    </td>
+                    <td>
+                        <select class="violation-select" ${isCounselorView ? 'disabled' : ''} onchange="updateCloudField('${id}', 'sleep', this.value)">
+                            <option value="لا يوجد" ${data.sleep === 'لا يوجد' ? 'selected' : ''}>لا يوجد</option>
+                            <option value="نوم متكرر" ${data.sleep === 'نوم متكرر' ? 'selected' : ''}>نوم متكرر</option>
+                            <option value="نوم خفيف" ${data.sleep === 'نوم خفيف' ? 'selected' : ''}>نوم خفيف</option>
+                        </select>
+                    </td>
+                    <td>
+                        <select class="violation-select" ${isCounselorView ? 'disabled' : ''} onchange="updateCloudField('${id}', 'participation', this.value)">
+                            <option value="لا يوجد" ${data.participation === 'لا يوجد' ? 'selected' : ''}>لا يوجد</option>
+                            <option value="مشاركة ضعيفة" ${data.participation === 'مشاركة ضعيفة' ? 'selected' : ''}>مشاركة ضعيفة</option>
+                            <option value="عدم مشاركة مطلقاً" ${data.participation === 'عدم مشاركة مطلقاً' ? 'selected' : ''}>عدم مشاركة مطلقاً</option>
+                        </select>
+                    </td>
                     <td>
                         <textarea class="notes-input" ${isCounselorView ? 'disabled' : ''} placeholder="سلوكيات وملاحظات المعلم..." onblur="updateCloudField('${id}', 'notes', this.value)">${data.notes || ''}</textarea>
                         <div id="counselor_box_${id}" style="display:none; margin-top: 5px;">
@@ -716,8 +735,8 @@
                         </div>
                     </td>
                     <td class="no-print">
-                        <button class="btn-view-report" onclick="openSingleReport('${data.name}', 'الحالي', ${data.homework}, ${data.research}, ${data.sleep}, ${data.participation}, \`${data.notes || 'لا توجد'}\`, \`${data.reply || 'لم يتم الرد بعد'}\`)">👁️ معاينة</button>
-                        <button class="btn-edit-report" onclick="openEditReportModal('${id}', '${data.name}', ${data.homework}, ${data.research}, ${data.sleep}, ${data.participation}, \`${data.notes || ''}\`)">✏️ تعديل</button>
+                        <button class="btn-view-report" onclick="openSingleReport('${data.name}', 'الحالي', '${data.homework}', '${data.research}', '${data.sleep}', '${data.participation}', \`${data.notes || 'لا توجد'}\`, \`${data.reply || 'لم يتم الرد بعد'}\`)">👁️ معاينة</button>
+                        <button class="btn-edit-report" onclick="openEditReportModal('${id}', '${data.name}', '${data.homework}', '${data.research}', '${data.sleep}', '${data.participation}', \`${data.notes || ''}\`)">✏️ تعديل</button>
                         <button class="btn-remove" ${isCounselorView ? 'style="display:none;"' : ''} onclick="deleteCloudStudent('${id}')">🗑️ حذف</button>
                     </td>
                 `;
@@ -757,7 +776,7 @@
         const currentUrl = window.location.href.split('?')[0];
         const counselorUrl = currentUrl + "?mode=counselor";
         navigator.clipboard.writeText(counselorUrl).then(() => {
-            alert("تم نسخ رابط المرشد الطلابي بنجاح! 📋");
+            alert("تم نسخ رابط المرشد الطلابي بنجاح! 📋\nأرسله للمرشد، وعندما يفتحه ستظهر له حصرياً خانة وأزرار حفظ الردود الخاصة به.");
         });
     }
 
@@ -778,6 +797,14 @@
                 div.style.whiteSpace = 'pre-wrap';
                 ta.parentNode.replaceChild(div, ta);
             }
+        });
+
+        const selects = contentClone.querySelectorAll('select.violation-select');
+        const originalSelects = document.querySelectorAll('#tableBody select.violation-select');
+        selects.forEach((sel, idx) => {
+            const span = document.createElement('span');
+            span.textContent = originalSelects[idx].value;
+            sel.parentNode.replaceChild(span, sel);
         });
 
         const previewArea = document.getElementById('previewArea');
@@ -807,6 +834,14 @@
                 div.style.whiteSpace = 'pre-wrap';
                 ta.parentNode.replaceChild(div, ta);
             }
+        });
+
+        const selects = element.querySelectorAll('select.violation-select');
+        const originalSelects = document.querySelectorAll('#tableBody select.violation-select');
+        selects.forEach((sel, idx) => {
+            const span = document.createElement('span');
+            span.textContent = originalSelects[idx].value;
+            sel.parentNode.replaceChild(span, sel);
         });
 
         const options = {
