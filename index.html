@@ -230,11 +230,12 @@
 
         .history-card {
             background: white;
-            padding: 16px;
+            padding: 18px;
             border-radius: var(--radius-sm);
             border: 1px solid #e2e8f0;
             margin-bottom: 12px;
             box-shadow: var(--shadow-sm);
+            position: relative;
         }
 
         table {
@@ -349,6 +350,79 @@
             margin-top: 4px;
         }
 
+        /* تنسيقات القائمة المنسدلة للإجراءات */
+        .dropdown-actions {
+            position: relative;
+            display: inline-block;
+        }
+
+        .dropdown-btn {
+            background: #f1f5f9;
+            color: var(--text-main);
+            border: 1px solid var(--border);
+            padding: 7px 14px;
+            border-radius: var(--radius-sm);
+            font-family: inherit;
+            font-size: 0.85rem;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .dropdown-btn:hover {
+            background: #e2e8f0;
+            color: var(--maroon);
+        }
+
+        .dropdown-menu-list {
+            position: absolute;
+            top: 110%;
+            left: 0;
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            box-shadow: var(--shadow-md);
+            min-width: 150px;
+            z-index: 100;
+            display: none;
+            overflow: hidden;
+        }
+
+        .dropdown-menu-list.show {
+            display: block;
+        }
+
+        .dropdown-item {
+            width: 100%;
+            padding: 10px 14px;
+            text-align: right;
+            background: transparent;
+            border: none;
+            border-bottom: 1px solid #f1f5f9;
+            font-family: inherit;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--text-main);
+        }
+
+        .dropdown-item:last-child {
+            border-bottom: none;
+        }
+
+        .dropdown-item:hover {
+            background-color: #f8fafc;
+        }
+
+        .dropdown-item.item-view { color: #0284c7; }
+        .dropdown-item.item-edit { color: #d97706; }
+        .dropdown-item.item-delete { color: #dc2626; }
+
         .actions {
             margin-top: 30px;
             display: flex;
@@ -387,7 +461,6 @@
         .btn-save-student { background: #16a34a; color: white; padding: 6px 12px; font-size: 0.8rem; border-radius: 6px; cursor: pointer; border: none; font-family: inherit; font-weight: 700; }
         .btn-save-reply { background: #16a34a; color: white; padding: 6px 12px; font-size: 0.8rem; border-radius: 6px; cursor: pointer; border: none; display: none; margin-top: 4px; font-family: inherit; font-weight: 700; }
         .btn-view-report { background: #0284c7; color: white; padding: 6px 10px; font-size: 0.8rem; border-radius: 6px; border: none; cursor: pointer; }
-        .btn-edit-report { background: #d97706; color: white; padding: 6px 10px; font-size: 0.8rem; border-radius: 6px; border: none; cursor: pointer; }
         .btn-remove { background: #dc2626; color: white; padding: 6px 10px; font-size: 0.8rem; border-radius: 6px; border: none; cursor: pointer; }
         .btn-close { background: #64748b; color: white; }
 
@@ -436,7 +509,7 @@
         }
 
         @media print {
-            .select-section, .history-section, .actions, .btn-remove, .btn-edit-report, .btn-view-report, .btn-save-report, .btn-saved-list, .btn-save-student, .btn-save-reply, .btn-add-violation, .btn-remove-tag, .no-print, .modal-overlay, .toast-notification {
+            .select-section, .history-section, .actions, .btn-remove, .btn-edit-report, .btn-view-report, .btn-save-report, .btn-saved-list, .btn-save-student, .btn-save-reply, .btn-add-violation, .btn-remove-tag, .dropdown-actions, .no-print, .modal-overlay, .toast-notification {
                 display: none !important;
             }
             body { background: white; padding: 0; }
@@ -647,6 +720,20 @@
         setTimeout(() => toast.classList.remove("show"), 3000);
     }
 
+    function toggleDropdownMenu(id) {
+        const menu = document.getElementById(`dropdown_menu_${id}`);
+        document.querySelectorAll('.dropdown-menu-list').forEach(m => {
+            if (m !== menu) m.classList.remove('show');
+        });
+        if (menu) menu.classList.toggle('show');
+    }
+
+    document.addEventListener('click', function(e) {
+        if (!e.target.closest('.dropdown-actions')) {
+            document.querySelectorAll('.dropdown-menu-list').forEach(m => m.classList.remove('show'));
+        }
+    });
+
     function loadStudentsList() {
         db.collection("allowed_students").orderBy("name").get().then((snapshot) => {
             allStudents = [];
@@ -720,20 +807,24 @@
                 
                 html += `
                     <div class="history-card" id="history_card_${docId}">
-                        <div style="font-weight: bold; color: var(--maroon); margin-bottom: 8px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
                             <span class="time-badge-referral"><i class="fa-solid fa-calendar-check"></i> إحالة المعلم: ${createdTimeStr}</span>
+                            <div class="dropdown-actions no-print">
+                                <button class="dropdown-btn" onclick="toggleDropdownMenu('hist_${docId}')">
+                                    <span>الخيارات</span> <i class="fa-solid fa-ellipsis-vertical"></i>
+                                </button>
+                                <div class="dropdown-menu-list" id="dropdown_menu_hist_${docId}">
+                                    <button class="dropdown-item item-view" onclick="openSingleReport('${data.name}', '${createdTimeStr}', \`${violationsList}\`, \`${data.notes || 'لا توجد'}\`, \`${data.reply || 'لم يتم الرد بعد'}\`, '${replyTimeStr || ''}')"><i class="fa-solid fa-eye"></i> معاينة</button>
+                                    <button class="dropdown-item item-edit" onclick="openEditReportModal('${docId}', '${data.name}', \`${data.notes || ''}\`)"><i class="fa-solid fa-pen"></i> تعديل</button>
+                                    <button class="dropdown-item item-delete" onclick="deleteHistoryRecord('${docId}', '${studentName}')"><i class="fa-solid fa-trash"></i> حذف</button>
+                                </div>
+                            </div>
                         </div>
                         <div style="font-size: 0.85rem; margin-bottom: 4px;"><strong>المخالفات:</strong> ${violationsList}</div>
                         <div style="font-size: 0.85rem; margin-bottom: 4px;"><strong>ملاحظاتك:</strong> ${data.notes || 'لا توجد ملاحظات'}</div>
-                        <div style="font-size: 0.85rem; color: #0284c7; margin-bottom: 8px;">
+                        <div style="font-size: 0.85rem; color: #0284c7; margin-bottom: 4px;">
                             <strong>رد المرشد الطلابي:</strong> ${data.reply || 'لم يتم الرد بعد'} 
                             ${replyTimeStr ? `<br><span class="time-badge-reply"><i class="fa-solid fa-reply-all"></i> وقت الرد: ${replyTimeStr}</span>` : ''}
-                        </div>
-                        
-                        <div style="display: flex; gap: 8px; justify-content: flex-end;" class="no-print">
-                            <button class="btn-view-report" onclick="openSingleReport('${data.name}', '${createdTimeStr}', \`${violationsList}\`, \`${data.notes || 'لا توجد'}\`, \`${data.reply || 'لم يتم الرد بعد'}\`, '${replyTimeStr || ''}')"><i class="fa-solid fa-eye"></i> معاينة</button>
-                            <button class="btn-edit-report" onclick="openEditReportModal('${docId}', '${data.name}', \`${data.notes || ''}\`)"><i class="fa-solid fa-pen"></i> تعديل</button>
-                            <button class="btn-remove" onclick="deleteHistoryRecord('${docId}', '${studentName}')"><i class="fa-solid fa-trash"></i> حذف</button>
                         </div>
                     </div>
                 `;
@@ -826,19 +917,25 @@
                     <div class="history-card">
                         <div style="display: flex; justify-content: space-between; align-items: center; font-weight: bold; color: var(--maroon); margin-bottom: 8px;">
                             <span>🎓 الطالب: ${data.name}</span>
-                            <span class="time-badge-referral"><i class="fa-solid fa-calendar-check"></i> ${createdTimeStr}</span>
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <span class="time-badge-referral"><i class="fa-solid fa-calendar-check"></i> ${createdTimeStr}</span>
+                                <div class="dropdown-actions no-print">
+                                    <button class="dropdown-btn" onclick="toggleDropdownMenu('saved_${docId}')">
+                                        <span>خيارات</span> <i class="fa-solid fa-ellipsis-vertical"></i>
+                                    </button>
+                                    <div class="dropdown-menu-list" id="dropdown_menu_saved_${docId}">
+                                        <button class="dropdown-item item-view" onclick="openSingleReport('${data.name}', '${createdTimeStr}', \`${violationsList}\`, \`${data.notes || 'لا توجد'}\`, \`${data.reply || 'لم يتم الرد بعد'}\`, '${replyTimeStr || ''}')"><i class="fa-solid fa-eye"></i> معاينة</button>
+                                        <button class="dropdown-item item-edit" onclick="openEditReportModal('${docId}', '${data.name}', \`${data.notes || ''}\`)"><i class="fa-solid fa-pen"></i> تعديل</button>
+                                        <button class="dropdown-item item-delete" onclick="deleteSavedReport('${docId}')"><i class="fa-solid fa-trash"></i> حذف</button>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                         <div style="font-size: 0.85rem; margin-bottom: 4px;"><strong>المخالفات المسجلة:</strong> ${violationsList}</div>
                         <div style="font-size: 0.85rem; margin-bottom: 4px;"><strong>ملاحظات المعلم:</strong> ${data.notes || 'لا توجد'}</div>
-                        <div style="font-size: 0.85rem; color: #0284c7; margin-bottom: 8px;">
+                        <div style="font-size: 0.85rem; color: #0284c7; margin-bottom: 4px;">
                             <strong>رد المرشد:</strong> ${data.reply || 'لم يتم الرد بعد'}
                             ${replyTimeStr ? `<br><span class="time-badge-reply"><i class="fa-solid fa-reply-all"></i> وقت الرد: ${replyTimeStr}</span>` : ''}
-                        </div>
-                        
-                        <div style="display: flex; gap: 8px; justify-content: flex-end;">
-                            <button class="btn-view-report" onclick="openSingleReport('${data.name}', '${createdTimeStr}', \`${violationsList}\`, \`${data.notes || 'لا توجد'}\`, \`${data.reply || 'لم يتم الرد بعد'}\`, '${replyTimeStr || ''}')"><i class="fa-solid fa-eye"></i> معاينة</button>
-                            <button class="btn-edit-report" onclick="openEditReportModal('${docId}', '${data.name}', \`${data.notes || ''}\`)"><i class="fa-solid fa-pen"></i> تعديل</button>
-                            <button class="btn-remove" onclick="deleteSavedReport('${docId}')"><i class="fa-solid fa-trash"></i> حذف</button>
                         </div>
                     </div>
                 `;
@@ -873,8 +970,7 @@
             <p><strong>المخالفات المسجلة:</strong> ${violations}</p>
             <p><strong>ملاحظات المعلم:</strong> ${notes}</p>
             <hr style="border: 0; border-top: 1px solid #ddd; margin: 15px 0;">
-            <p><strong>رد المرشد الطلابي:</strong> <span style="color: #0284c7; font-weight: bold;">${reply}</span> 
-            ${replyDateStr ? `<br><span class="time-badge-reply" style="margin-top: 8px;"><i class="fa-solid fa-reply-all"></i> وقت الرد: ${replyDateStr}</span>` : ''}</p>
+            <p><strong>رد المرشد الطلابي:</strong> <span style="color: #0284c7; font-weight: bold;">${reply}</span>${replyDateStr ? `<br><span class="time-badge-reply" style="margin-top: 8px;"><i class="fa-solid fa-reply-all"></i> وقت الرد: ${replyDateStr}</span>` : ''}</p>
         `;
         document.getElementById('singleReportContent').innerHTML = content;
         document.getElementById('singleReportModal').style.display = 'flex';
@@ -937,9 +1033,6 @@
                 const data = doc.data();
                 const id = doc.id;
 
-                // التصفية السحابية الذكية
-                // المعلم يشاهد فقط التقارير غير المؤرشفة
-                // المرشد الطلابي يشاهد التقارير التي لم يرد عليها بعد (المستجدة)
                 if (!isCounselorView && data.isArchived) return;
                 if (isCounselorView && (data.reply !== "لم يتم الرد بعد" && data.reply)) return;
 
@@ -964,215 +1057,4 @@
                             <option value="عدم إحضار الواجبات">عدم إحضار الواجبات</option>
                             <option value="عدم إحضار البحث">عدم إحضار البحث</option>
                             <option value="كثرة النوم">كثرة النوم</option>
-                            <option value="ضعف المشاركة">ضعف المشاركة</option>
-                        </select>
-                        
-                        <select id="count_select_${id}" class="count-select" ${isCounselorView ? 'disabled' : ''}>
-                            <option value="">-- اختر العدد --</option>
-                        </select>
-                        
-                        <button class="btn-add-violation" ${isCounselorView ? 'style="display:none;"' : ''} onclick="addViolationToStudent('${id}')"><i class="fa-solid fa-circle-plus"></i> إضافة المخالفة للقائمة</button>
-                    </td>
-                    <td>
-                        <div id="violation_tags_${id}" class="violation-tags-list"></div>
-                    </td>
-                    <td>
-                        <textarea class="notes-input" ${isCounselorView ? 'disabled' : ''} placeholder="سلوكيات وملاحظات المعلم..." onblur="updateCloudField('${id}', 'notes', this.value)">${data.notes || ''}</textarea>
-                        <div id="counselor_box_${id}" style="display:none; margin-top: 5px;">
-                            <textarea id="reply_${id}" class="counselor-reply" placeholder="اكتب رد المرشد الطلابي هنا...">${data.reply !== "لم يتم الرد بعد" ? data.reply : ''}</textarea>
-                            ${replyTimeStr ? `<div style="text-align: right;"><span class="time-badge-reply"><i class="fa-solid fa-reply-all"></i> وقت الرد: ${replyTimeStr}</span></div>` : ''}
-                            <button class="btn-save-reply" onclick="saveReply('${id}')"><i class="fa-solid fa-paper-plane"></i> حفظ رد المرشد</button>
-                        </div>
-                    </td>
-                    <td class="no-print" style="display: flex; gap: 4px; justify-content: center; align-items: center; padding-top: 15px;">
-                        <button class="btn-save-student" ${isCounselorView ? 'style="display:none;"' : ''} onclick="saveSingleStudent('${id}', '${data.name}')" title="حفظ وأرشفة الطالب"><i class="fa-solid fa-floppy-disk"></i></button>
-                        <button class="btn-view-report" onclick="openSingleReport('${data.name}', '${createdTimeStr}', \`${violationsSummaryText}\`, \`${data.notes || 'لا توجد'}\`, \`${data.reply || 'لم يتم الرد بعد'}\`, '${replyTimeStr || ''}')" title="معاينة"><i class="fa-solid fa-eye"></i></button>
-                        <button class="btn-remove" ${isCounselorView ? 'style="display:none;"' : ''} onclick="deleteCloudStudent('${id}')" title="حذف"><i class="fa-solid fa-trash"></i></button>
-                    </td>
-                `;
-                tbody.appendChild(row);
-
-                renderStudentViolationTags(id, currentViolations);
-            });
-
-            if (isCounselorView) {
-                document.querySelectorAll('[id^="counselor_box_"]').forEach(box => box.style.display = 'block');
-                document.querySelectorAll('.btn-save-reply').forEach(btn => btn.style.display = 'inline-block');
-            }
-        });
-    }
-
-    function onTypeSelectChange(id) {
-        const typeSelect = document.getElementById(`type_select_${id}`);
-        const countSelect = document.getElementById(`count_select_${id}`);
-        const selectedType = typeSelect.value;
-
-        countSelect.innerHTML = '<option value="">-- اختر العدد --</option>';
-
-        if (countOptionsMap[selectedType]) {
-            countOptionsMap[selectedType].forEach(opt => {
-                const optionEl = document.createElement("option");
-                optionEl.value = opt.value;
-                optionEl.textContent = opt.text;
-                countSelect.appendChild(optionEl);
-            });
-        }
-    }
-
-    async function addViolationToStudent(id) {
-        const typeSelect = document.getElementById(`type_select_${id}`);
-        const countSelect = document.getElementById(`count_select_${id}`);
-
-        const typeVal = typeSelect.value;
-        const countVal = countSelect.value;
-
-        if (!typeVal || !countVal) {
-            return alert("يرجى اختيار نوع المخالفة والعدد قبل الضغط على إضافة!");
-        }
-
-        const violationString = `${typeVal}: ${countVal}`;
-
-        const docRef = db.collection("referral_list").doc(id);
-        const doc = await docRef.get();
-        if (doc.exists) {
-            const currentArray = doc.data().violations || [];
-            currentArray.push(violationString);
-            await docRef.update({ violations: currentArray });
-            typeSelect.value = "";
-            countSelect.innerHTML = '<option value="">-- اختر العدد --</option>';
-            showToast("تمت إضافة المخالفة للقائمة بنجاح!");
-        }
-    }
-
-    async function removeViolationFromStudent(id, indexToRemove) {
-        const docRef = db.collection("referral_list").doc(id);
-        const doc = await docRef.get();
-        if (doc.exists) {
-            let currentArray = doc.data().violations || [];
-            currentArray.splice(indexToRemove, 1);
-            await docRef.update({ violations: currentArray });
-            showToast("تم حذف المخالفة!");
-        }
-    }
-
-    function renderStudentViolationTags(id, violationsArray) {
-        const container = document.getElementById(`violation_tags_${id}`);
-        if (!container) return;
-
-        container.innerHTML = "";
-
-        if (!violationsArray || violationsArray.length === 0) {
-            container.innerHTML = '<span style="color: #94a3b8; font-size: 0.8rem; font-style: italic;">لا توجد مخالفات مضافة</span>';
-            return;
-        }
-
-        violationsArray.forEach((vItem, index) => {
-            const tag = document.createElement("div");
-            tag.className = "violation-tag";
-            tag.innerHTML = `
-                <span>• ${vItem}</span>
-                ${!isCounselorView ? `<button class="btn-remove-tag no-print" onclick="removeViolationFromStudent('${id}',${index})" title="حذف المخالفة"><i class="fa-solid fa-xmark"></i></button>` : ''}
-            `;
-            container.appendChild(tag);
-        });
-    }
-
-    async function updateCloudField(id, field, value) {
-        if (!isCounselorView) {
-            await db.collection("referral_list").doc(id).update({ [field]: value });
-        }
-    }
-
-    async function saveReply(id) {
-        const replyText = document.getElementById(`reply_${id}`).value;
-        if (!replyText.trim()) return alert("يرجى كتابة الرد قبل الحفظ!");
-
-        try {
-            await db.collection("referral_list").doc(id).update({ 
-                reply: replyText,
-                replyCreatedAt: firebase.firestore.FieldValue.serverTimestamp()
-            });
-            showToast("تم حفظ الرد وتوقيته وإخفاء التقرير من قائمة المرشد!");
-        } catch (error) {
-            alert("حدث خطأ أثناء حفظ الرد.");
-        }
-    }
-
-    async function deleteCloudStudent(id) {
-        if(!isCounselorView && confirm("إزالة هذا الطالب من القائمة الحالية؟")) {
-            await db.collection("referral_list").doc(id).delete();
-            showToast("تم إزالة الطالب من القائمة!");
-        }
-    }
-
-    function shareCounselorLink() {
-        const currentUrl = window.location.href.split('?')[0];
-        const counselorUrl = currentUrl + "?mode=counselor";
-        navigator.clipboard.writeText(counselorUrl).then(() => {
-            showToast("تم نسخ رابط المرشد الطلابي بنجاح!");
-        });
-    }
-
-    function showPreview() {
-        const contentClone = document.getElementById('pdfContent').cloneNode(true);
-        contentClone.querySelectorAll('.no-print').forEach(el => el.remove());
-        contentClone.querySelectorAll('.btn-save-reply').forEach(el => el.remove());
-
-        const textareas = contentClone.querySelectorAll('textarea');
-        const originalTextareas = document.querySelectorAll('#tableBody textarea');
-        textareas.forEach((ta, idx) => {
-            if(!ta.classList.contains('counselor-reply')) {
-                const div = document.createElement('div');
-                div.textContent = originalTextareas[idx].value || '-';
-                div.style.textAlign = 'right';
-                div.style.padding = '4px';
-                div.style.fontSize = '0.85rem';
-                div.style.whiteSpace = 'pre-wrap';
-                ta.parentNode.replaceChild(div, ta);
-            }
-        });
-
-        const previewArea = document.getElementById('previewArea');
-        previewArea.innerHTML = '';
-        previewArea.appendChild(contentClone);
-        document.getElementById('previewModal').style.display = 'flex';
-    }
-
-    function closePreview() {
-        document.getElementById('previewModal').style.display = 'none';
-    }
-
-    function downloadPDF() {
-        const element = document.getElementById('pdfContent').cloneNode(true);
-        element.querySelectorAll('.no-print').forEach(el => el.remove());
-        element.querySelectorAll('.btn-save-reply').forEach(el => el.remove());
-
-        const textareas = element.querySelectorAll('textarea');
-        const originalTextareas = document.querySelectorAll('#tableBody textarea');
-        textareas.forEach((ta, idx) => {
-            if(!ta.classList.contains('counselor-reply')) {
-                const div = document.createElement('div');
-                div.textContent = originalTextareas[idx].value || '-';
-                div.style.textAlign = 'right';
-                div.style.padding = '4px';
-                div.style.fontSize = '0.85rem';
-                div.style.whiteSpace = 'pre-wrap';
-                ta.parentNode.replaceChild(div, ta);
-            }
-        });
-
-        const options = {
-            margin: 10,
-            filename: 'استمارة_تحويل_المرشد_الطلابي.pdf',
-            image: { type: 'jpeg', quality: 0.98 },
-            html2canvas: { scale: 2, useCORS: true },
-            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-        };
-        html2pdf().from(element).set(options).save();
-    }
-
-    window.onload = loadStudentsList;
-</script>
-
-</body>
-</html>
+                            <option
